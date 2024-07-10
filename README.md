@@ -2,7 +2,7 @@
 
 [![Gem Version](https://badge.fury.io/rb/launchdarkly-openfeature-server-sdk.svg)](http://badge.fury.io/rb/launchdarkly-openfeature-server-sdk)
 
-[![Quality control checks](https://github.com/launchdarkly/openfeature-ruby-server/actions/workflows/ci.yml/badge.svg)](https://github.com/launchdarkly/openfeature-ruby-server/actions/workflows/ci.yml)
+[![Run CI](https://github.com/launchdarkly/openfeature-ruby-server/actions/workflows/ci.yml/badge.svg)](https://github.com/launchdarkly/openfeature-ruby-server/actions/workflows/ci.yml)
 [![RubyDoc](https://img.shields.io/static/v1?label=docs+-+all+versions&message=reference&color=00add8)](https://www.rubydoc.info/gems/launchdarkly-openfeature-server-sdk)
 [![GitHub Pages](https://img.shields.io/static/v1?label=docs+-+latest&message=reference&color=00add8)](https://launchdarkly.github.io/openfeature-ruby-server)
 

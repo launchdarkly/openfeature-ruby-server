@@ -1,0 +1,25 @@
+name: CI Workflow
+description: 'Shared CI workflow.'
+inputs:
+  ruby-version:
+    description: 'The version of ruby to setup and run'
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: ${{ inputs.ruby-version }}
+
+    - name: Install dependencies
+      shell: bash
+      run: bundle install
+
+    - name: Run tests
+      shell: bash
+      run: bundle exec rspec spec
+
+    - name: Run RuboCop
+      shell: bash
+      run: bundle exec rubocop --parallel

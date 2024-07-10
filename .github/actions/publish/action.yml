@@ -1,0 +1,28 @@
+name: Publish Package
+description: 'Publish the package to rubygems'
+inputs:
+  dry_run:
+    description: 'Is this a dry run. If so no package will be published.'
+    required: true
+outputs:
+  gem-hash:
+    description: "base64-encoded sha256 hashes of distribution files"
+    value: ${{ steps.gem-hash.outputs.gem-hash }}
+
+runs:
+  using: composite
+  steps:
+    - name: Build gemspec
+      shell: bash
+      run: gem build launchdarkly-openfeature-server-sdk.gemspec
+
+    - name: Hash gem for provenance
+      id: gem-hash
+      shell: bash
+      run: |
+        echo "gem-hash=$(sha256sum launchdarkly-openfeature-server-sdk-*.gem | base64 -w0)" >> "$GITHUB_OUTPUT"
+
+    - name: Publish Library
+      shell: bash
+      if: ${{ inputs.dry_run == 'false' }}
+      run: gem push launchdarkly-openfeature-server-sdk-*.gem

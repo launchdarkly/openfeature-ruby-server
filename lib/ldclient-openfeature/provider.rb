@@ -16,7 +16,7 @@ module LaunchDarkly
       # @param config [LaunchDarkly::Config]
       # @param wait_for_seconds [Float]
       #
-      def initialize(sdk_key, config, wait_for_seconds = 5)
+      def initialize(sdk_key, config = LaunchDarkly::Config.default, wait_for_seconds = 5)
         @client = LaunchDarkly::LDClient.new(sdk_key, config, wait_for_seconds)
 
         @context_converter = Impl::EvaluationContextConverter.new(config.logger)
