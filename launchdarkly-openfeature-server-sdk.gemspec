@@ -10,12 +10,12 @@ Gem::Specification.new do |spec|
 
   spec.summary = "LaunchDarkly OpenFeature Server SDK"
   spec.description = "A LaunchDarkly provider for use with the OpenFeature SDK"
-  spec.homepage = "https://github.com/launchdarkly/openfeature-ruby-server-sdk"
+  spec.homepage = "https://github.com/launchdarkly/openfeature-ruby-server"
   spec.required_ruby_version = ">= 3.1"
 
   spec.metadata["homepage_uri"] = spec.homepage
-  spec.metadata["source_code_uri"] = "https://github.com/launchdarkly/openfeature-ruby-server-sdk"
-  spec.metadata["changelog_uri"] = "https://github.com/launchdarkly/openfeature-ruby-server-sdk/blob/main/CHANGELOG.md"
+  spec.metadata["source_code_uri"] = "https://github.com/launchdarkly/openfeature-ruby-server"
+  spec.metadata["changelog_uri"] = "https://github.com/launchdarkly/openfeature-ruby-server/blob/main/CHANGELOG.md"
 
   # Specify which files should be added to the gem when it is released.
   # The `git ls-files -z` loads the files in the RubyGem that have been added into git.
