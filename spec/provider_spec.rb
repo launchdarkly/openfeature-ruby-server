@@ -64,11 +64,13 @@ RSpec.describe LaunchDarkly::OpenFeature::Provider do
     ['default-string', true, 'default-string', :fetch_string_value],
 
     [1, 2, 2, :fetch_integer_value],
+    [1, 2.0, 2, :fetch_integer_value],
     [1, true, 1, :fetch_integer_value],
     [1, false, 1, :fetch_integer_value],
     [1, "", 1, :fetch_integer_value],
 
     [1.0, 2.0, 2.0, :fetch_float_value],
+    [1.0, 2, 2.0, :fetch_float_value],
     [1.0, true, 1.0, :fetch_float_value],
     [1.0, 'return-string', 1.0, :fetch_float_value],
 

@@ -8,6 +8,9 @@ module LaunchDarkly
     class Provider
       attr_reader :metadata
 
+      NUMERIC_TYPES = %i[integer float number].freeze
+      private_constant :NUMERIC_TYPES
+
       #
       # @param sdk_key [String]
       # @param config [LaunchDarkly::Config]
@@ -70,14 +73,24 @@ module LaunchDarkly
           return mismatched_type_details(default_value)
         elsif flag_type == :string && !evaluation_detail.value.is_a?(String)
           return mismatched_type_details(default_value)
-        elsif flag_type == :integer && !evaluation_detail.value.is_a?(Integer)
-          return mismatched_type_details(default_value)
-        elsif flag_type == :float && !evaluation_detail.value.is_a?(Float)
-          return mismatched_type_details(default_value)
-        elsif flag_type == :number && !evaluation_detail.value.is_a?(Numeric)
+        elsif NUMERIC_TYPES.include?(flag_type) && !evaluation_detail.value.is_a?(Numeric)
           return mismatched_type_details(default_value)
         elsif flag_type == :object && !evaluation_detail.value.is_a?(Hash) && !evaluation_detail.value.is_a?(Array)
           return mismatched_type_details(default_value)
+        end
+
+        if flag_type == :integer
+          evaluation_detail = LaunchDarkly::EvaluationDetail.new(
+            evaluation_detail.value.to_i,
+            evaluation_detail.variation_index,
+            evaluation_detail.reason
+          )
+        elsif flag_type == :float
+          evaluation_detail = LaunchDarkly::EvaluationDetail.new(
+            evaluation_detail.value.to_f,
+            evaluation_detail.variation_index,
+            evaluation_detail.reason
+          )
         end
 
         @details_converter.to_resolution_details(evaluation_detail)
