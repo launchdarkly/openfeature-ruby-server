@@ -1,6 +1,6 @@
 # Contributing to the LaunchDarkly OpenFeature provider for the Server-side SDK for Ruby
 
-LaunchDarkly has published an [SDK contributor's guide](https://docs.launchdarkly.com/sdk/concepts/contributors-guide) that provides a detailed explanation of how our SDKs work. See below for additional information on how to contribute to this SDK.
+LaunchDarkly has published an [SDK contributor's guide](https://docs.launchdarkly.com/sdk/concepts/contributors-guide) that provides a detailed explanation of how our SDKs work. See below for additional information on how to contribute to this provider.
 
 ## Submitting bug reports and feature requests
 
