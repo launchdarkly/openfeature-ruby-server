@@ -7,7 +7,7 @@ RSpec.describe LaunchDarkly::OpenFeature::Provider do
     td
   }
   let(:evaluation_context) { OpenFeature::SDK::EvaluationContext.new(key: "user-key") }
-  let(:config) { LaunchDarkly::Config.new(data_source: td) }
+  let(:config) { LaunchDarkly::Config.new(data_source: td, send_events: false) }
   let(:provider) { described_class.new("example-key", config) }
 
   it "metadata is set correctly" do
