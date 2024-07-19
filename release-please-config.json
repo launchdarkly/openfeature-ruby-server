@@ -2,7 +2,7 @@
   "packages": {
     ".": {
       "release-type": "ruby",
-      "bump-minor-pre-major": true,
+      "bump-minor-pre-major": false,
       "versioning": "default",
       "include-component-in-tag": false,
       "include-v-in-tag": false,
