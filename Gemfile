@@ -2,7 +2,7 @@
 
 source "https://rubygems.org"
 
-# Specify your gem's dependencies in openfeature-ruby-server.gemspec
+# Specify your gem's dependencies in launchdarkly-openfeature-server-sdk.gemspec
 gemspec
 
 gem "rake", "~> 13.0"
