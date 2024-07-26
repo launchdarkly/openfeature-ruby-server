@@ -14,6 +14,10 @@ RSpec.describe LaunchDarkly::OpenFeature::Provider do
     expect(provider.metadata.name).to eq("launchdarkly-openfeature-server")
   end
 
+  it "exposes the underlying LaunchDarkly client" do
+    expect(provider.client).to be_a LaunchDarkly::LDClient
+  end
+
   it "not providing context returns error" do
     resolution_details = provider.fetch_boolean_value(flag_key: "flag-key", default_value: true)
 
