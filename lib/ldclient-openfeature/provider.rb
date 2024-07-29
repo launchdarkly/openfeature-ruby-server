@@ -8,6 +8,11 @@ module LaunchDarkly
     class Provider
       attr_reader :metadata
 
+      #
+      # @return client [LaunchDarkly::LDClient]
+      #
+      attr_reader :client
+
       NUMERIC_TYPES = %i[integer float number].freeze
       private_constant :NUMERIC_TYPES
 
