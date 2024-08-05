@@ -6,10 +6,19 @@ require 'open_feature/sdk'
 module LaunchDarkly
   module OpenFeature
     class Provider
+      #
+      # Retrieve metadata information describing this provider.
+      #
+      # @return [::OpenFeature::SDK::Provider::ProviderMetadata]
+      #
       attr_reader :metadata
 
       #
-      # @return client [LaunchDarkly::LDClient]
+      # Access the underlying LaunchDarky client instance backing this provider.
+      #
+      # This is useful for accessing additional functionality not exposed by the provider.
+      #
+      # @return [LaunchDarkly::LDClient]
       #
       attr_reader :client
 
