@@ -33,7 +33,7 @@ This version of the LaunchDarkly provider works with Ruby 3.1 and above.
 Install the library
 
 ```shell
-$ gem install launchdarkly-openfeature-server
+$ gem install launchdarkly-openfeature-server-sdk
 ```
 
 ### Usage

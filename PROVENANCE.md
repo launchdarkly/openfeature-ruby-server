@@ -31,9 +31,9 @@ launchdarkly-openfeature-server-sdk-${SDK_VERSION}.gem
 Below is a sample of expected output.
 
 ```
-Verified signature against tlog entry index 78214752 at URL: https://rekor.sigstore.dev/api/v1/log/entries/24296fb24b8ad77ab941c118ef7e0b2d656b962a0d670c6ac91cfa37d07b7b121ae560b00a978ecf
-Verified build using builder "https://github.com/slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@refs/tags/v1.7.0" at commit f43b3ad834103fdc282652efbfe4963e8dfa737b
-Verifying artifact launchdarkly-server-sdk-8.3.0.gem: PASSED
+Verified signature against tlog entry index 118580648 at URL: https://rekor.sigstore.dev/api/v1/log/entries/24296fb24b8ad77a86b957c02c3834833e7b54e28152fa35cc2a5884994566f7897807c390a9ad83
+Verified build using builder "https://github.com/slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@refs/tags/v1.10.0" at commit c1b4bd786f6f7b44d46642f901e6ca95ce4bd170
+Verifying artifact launchdarkly-openfeature-server-sdk-0.1.0.gem: PASSED
 
 PASSED: Verified SLSA provenance
 ```
