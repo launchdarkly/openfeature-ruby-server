@@ -17,52 +17,48 @@ jobs:
       upload-tag-name: ${{ steps.release.outputs.tag_name }}
       gem-hash: ${{ steps.publish.outputs.gem-hash}}
     steps:
-      - uses: google-github-actions/release-please-action@v3
+      - uses: googleapis/release-please-action@v4
         id: release
-        with:
-          command: manifest
-          token: ${{secrets.GITHUB_TOKEN}}
-          default-branch: main
 
       - uses: actions/checkout@v4
-        if: ${{ steps.release.outputs.releases_created }}
+        if: ${{ steps.release.outputs.releases_created == 'true' }}
         with:
           fetch-depth: 0 # If you only need the current version keep this.
 
-      - uses: launchdarkly/gh-actions/actions/release-secrets@release-secrets-v1.0.0
-        if: ${{ steps.release.outputs.releases_created }}
+      - uses: launchdarkly/gh-actions/actions/release-secrets@release-secrets-v1.2.0
+        if: ${{ steps.release.outputs.releases_created == 'true' }}
         name: 'Get rubygems API key'
         with:
           aws_assume_role: ${{ vars.AWS_ROLE_ARN }}
           ssm_parameter_pairs: '/production/common/releasing/rubygems/api_key = GEM_HOST_API_KEY'
 
       - uses: ./.github/actions/ci
-        if: ${{ steps.release.outputs.releases_created }}
+        if: ${{ steps.release.outputs.releases_created == 'true' }}
         with:
           ruby-version: 3.1
 
       - uses: ./.github/actions/build-docs
-        if: ${{ steps.release.outputs.releases_created }}
+        if: ${{ steps.release.outputs.releases_created == 'true' }}
 
       - uses: ./.github/actions/publish
         id: publish
-        if: ${{ steps.release.outputs.releases_created }}
+        if: ${{ steps.release.outputs.releases_created == 'true' }}
         with:
           dry_run: false
 
       - uses: ./.github/actions/publish-docs
-        if: ${{ steps.release.outputs.releases_created }}
+        if: ${{ steps.release.outputs.releases_created == 'true' }}
         with:
           token: ${{secrets.GITHUB_TOKEN}}
 
   release-provenance:
     needs: [ 'release-package' ]
-    if: ${{ needs.release-package.outputs.release-created }}
+    if: ${{ needs.release-package.outputs.release-created == 'true' }}
     permissions:
       actions: read
       id-token: write
       contents: write
-    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v1.10.0
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.0.0
     with:
       base64-subjects: "${{ needs.release-package.outputs.gem-hash }}"
       upload-assets: true
