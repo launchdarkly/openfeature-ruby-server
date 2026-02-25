@@ -14,7 +14,7 @@ RSpec.describe LaunchDarkly::OpenFeature::Impl::EvaluationContextConverter do
       context = OpenFeature::SDK::EvaluationContext.new(targeting_key: "user-key")
       ld_context = context_converter.to_ld_context(context)
 
-      expect(ld_context.valid?).to eq(true)
+      expect(ld_context.valid?).to be(true)
       expect(ld_context.key).to eq('user-key')
       expect(ld_context.kind).to eq('user')
     end
@@ -23,7 +23,7 @@ RSpec.describe LaunchDarkly::OpenFeature::Impl::EvaluationContextConverter do
       context = OpenFeature::SDK::EvaluationContext.new(key: "user-key")
       ld_context = context_converter.to_ld_context(context)
 
-      expect(ld_context.valid?).to eq(true)
+      expect(ld_context.valid?).to be(true)
       expect(ld_context.key).to eq("user-key")
       expect(ld_context.kind).to eq("user")
     end
@@ -32,7 +32,7 @@ RSpec.describe LaunchDarkly::OpenFeature::Impl::EvaluationContextConverter do
       context = OpenFeature::SDK::EvaluationContext.new(targeting_key: "should-use", kind: "org", key: "do-not-use")
       ld_context = context_converter.to_ld_context(context)
 
-      expect(ld_context.valid?).to eq(true)
+      expect(ld_context.valid?).to be(true)
       expect(ld_context.key).to eq("should-use")
       expect(ld_context.kind).to eq("org")
     end
@@ -41,7 +41,7 @@ RSpec.describe LaunchDarkly::OpenFeature::Impl::EvaluationContextConverter do
       context = OpenFeature::SDK::EvaluationContext.new(targeting_key: false, kind: "org", key: "fallback")
       ld_context = context_converter.to_ld_context(context)
 
-      expect(ld_context.valid?).to eq(true)
+      expect(ld_context.valid?).to be(true)
       expect(ld_context.key).to eq("fallback")
       expect(ld_context.kind).to eq("org")
     end
@@ -50,7 +50,7 @@ RSpec.describe LaunchDarkly::OpenFeature::Impl::EvaluationContextConverter do
       context = OpenFeature::SDK::EvaluationContext.new(targeting_key: false)
       ld_context = context_converter.to_ld_context(context)
 
-      expect(ld_context.valid?).to eq(false)
+      expect(ld_context.valid?).to be(false)
       expect(ld_context.key).to be_nil
 
       expect(log_output.string).to include("The EvaluationContext must contain either a 'targeting_key' or a 'key' and the type must be a string.")
@@ -60,7 +60,7 @@ RSpec.describe LaunchDarkly::OpenFeature::Impl::EvaluationContextConverter do
       context = OpenFeature::SDK::EvaluationContext.new(key: false)
       ld_context = context_converter.to_ld_context(context)
 
-      expect(ld_context.valid?).to eq(false)
+      expect(ld_context.valid?).to be(false)
       expect(ld_context.key).to be_nil
 
       expect(log_output.string).to include("A non-string 'key' attribute was provided.")
@@ -73,7 +73,7 @@ RSpec.describe LaunchDarkly::OpenFeature::Impl::EvaluationContextConverter do
       context = OpenFeature::SDK::EvaluationContext.new(key: "org-key", kind: "org")
       ld_context = context_converter.to_ld_context(context)
 
-      expect(ld_context.valid?).to eq(true)
+      expect(ld_context.valid?).to be(true)
       expect(ld_context.key).to eq("org-key")
       expect(ld_context.kind).to eq("org")
     end
@@ -82,7 +82,7 @@ RSpec.describe LaunchDarkly::OpenFeature::Impl::EvaluationContextConverter do
       context = OpenFeature::SDK::EvaluationContext.new(key: "org-key", kind: false)
       ld_context = context_converter.to_ld_context(context)
 
-      expect(ld_context.valid?).to eq(true)
+      expect(ld_context.valid?).to be(true)
       expect(ld_context.key).to eq("org-key")
       expect(ld_context.kind).to eq("user")
     end
@@ -93,10 +93,10 @@ RSpec.describe LaunchDarkly::OpenFeature::Impl::EvaluationContextConverter do
       context = OpenFeature::SDK::EvaluationContext.new(key: "user-key", kind: "user", anonymous: true, name: "Sandy", lastName: "Beaches")
       ld_context = context_converter.to_ld_context(context)
 
-      expect(ld_context.valid?).to eq(true)
+      expect(ld_context.valid?).to be(true)
       expect(ld_context.key).to eq("user-key")
       expect(ld_context.kind).to eq("user")
-      expect(ld_context[:anonymous]).to eq(true)
+      expect(ld_context[:anonymous]).to be(true)
       expect(ld_context[:name]).to eq("Sandy")
       expect(ld_context[:lastName]).to eq("Beaches")
     end
@@ -105,10 +105,10 @@ RSpec.describe LaunchDarkly::OpenFeature::Impl::EvaluationContextConverter do
       context = OpenFeature::SDK::EvaluationContext.new(key: "user-key", kind: "user", anonymous: true, name: 30, privateAttributes: "testing")
       ld_context = context_converter.to_ld_context(context)
 
-      expect(ld_context.valid?).to eq(true)
+      expect(ld_context.valid?).to be(true)
       expect(ld_context.key).to eq("user-key")
       expect(ld_context.kind).to eq("user")
-      expect(ld_context[:anonymous]).to eq(true)
+      expect(ld_context[:anonymous]).to be(true)
       expect(ld_context[:name]).to be_nil
       expect(ld_context.private_attributes).to eq([])
     end
@@ -126,7 +126,7 @@ RSpec.describe LaunchDarkly::OpenFeature::Impl::EvaluationContextConverter do
       context = OpenFeature::SDK::EvaluationContext.new(**attributes)
       ld_context = context_converter.to_ld_context(context)
 
-      expect(ld_context.valid?).to eq(true)
+      expect(ld_context.valid?).to be(true)
       expect(ld_context.key).to eq("user-key")
       expect(ld_context.kind).to eq("user")
       expect(ld_context.private_attributes).to eq([LaunchDarkly::Reference.create("name"), LaunchDarkly::Reference.create("/address/city")])
@@ -136,7 +136,7 @@ RSpec.describe LaunchDarkly::OpenFeature::Impl::EvaluationContextConverter do
       context = OpenFeature::SDK::EvaluationContext.new(key: "user-key", privateAttributes: [true])
       ld_context = context_converter.to_ld_context(context)
 
-      expect(ld_context.valid?).to eq(true)
+      expect(ld_context.valid?).to be(true)
       expect(ld_context.key).to eq("user-key")
 
       expect(log_output.string).to include("'privateAttributes' must be an array of only string values")
@@ -153,8 +153,8 @@ RSpec.describe LaunchDarkly::OpenFeature::Impl::EvaluationContextConverter do
       context = OpenFeature::SDK::EvaluationContext.new(**attributes)
       ld_context = context_converter.to_ld_context(context)
 
-      expect(ld_context.valid?).to eq(true)
-      expect(ld_context.multi_kind?).to eq(true)
+      expect(ld_context.valid?).to be(true)
+      expect(ld_context.multi_kind?).to be(true)
 
       user_context = ld_context.individual_context("user")
       expect(user_context).not_to be_nil
@@ -178,8 +178,8 @@ RSpec.describe LaunchDarkly::OpenFeature::Impl::EvaluationContextConverter do
       context = OpenFeature::SDK::EvaluationContext.new(**attributes)
       ld_context = context_converter.to_ld_context(context)
 
-      expect(ld_context.valid?).to eq(true)
-      expect(ld_context.multi_kind?).to eq(false)
+      expect(ld_context.valid?).to be(true)
+      expect(ld_context.multi_kind?).to be(false)
       expect(ld_context.key).to eq("org-key")
       expect(ld_context.kind).to eq("org")
       expect(ld_context[:name]).to eq("Org name")
@@ -194,8 +194,8 @@ RSpec.describe LaunchDarkly::OpenFeature::Impl::EvaluationContextConverter do
       context = OpenFeature::SDK::EvaluationContext.new(**attributes)
       ld_context = context_converter.to_ld_context(context)
 
-      expect(ld_context.valid?).to eq(false)
-      expect(ld_context.multi_kind?).to eq(false)
+      expect(ld_context.valid?).to be(false)
+      expect(ld_context.multi_kind?).to be(false)
     end
   end
 end

@@ -21,7 +21,7 @@ RSpec.describe LaunchDarkly::OpenFeature::Provider do
   it "not providing context returns error" do
     resolution_details = provider.fetch_boolean_value(flag_key: "flag-key", default_value: true)
 
-    expect(resolution_details.value).to eq(true)
+    expect(resolution_details.value).to be(true)
     expect(resolution_details.reason).to eq(OpenFeature::SDK::Provider::Reason::ERROR)
     expect(resolution_details.variant).to be_nil
     expect(resolution_details.error_code).to eq(OpenFeature::SDK::Provider::ErrorCode::TARGETING_KEY_MISSING)
@@ -30,7 +30,7 @@ RSpec.describe LaunchDarkly::OpenFeature::Provider do
   it "evaluation results are converted to details" do
     resolution_details = provider.fetch_boolean_value(flag_key: "fallthrough-boolean", default_value: true, evaluation_context: evaluation_context)
 
-    expect(resolution_details.value).to eq(true)
+    expect(resolution_details.value).to be(true)
     expect(resolution_details.reason).to eq("FALLTHROUGH")
     expect(resolution_details.variant).to eq("0")
     expect(resolution_details.error_code).to be_nil
@@ -41,7 +41,7 @@ RSpec.describe LaunchDarkly::OpenFeature::Provider do
     allow(LaunchDarkly::LDClient).to receive(:variation_detail).and_return(detail)
     resolution_details = provider.fetch_boolean_value(flag_key: "flag-key", default_value: true, evaluation_context: evaluation_context)
 
-    expect(resolution_details.value).to eq(true)
+    expect(resolution_details.value).to be(true)
     expect(resolution_details.reason).to eq(OpenFeature::SDK::Provider::Reason::ERROR)
     expect(resolution_details.variant).to be_nil
     expect(resolution_details.error_code).to eq(OpenFeature::SDK::Provider::ErrorCode::FLAG_NOT_FOUND)

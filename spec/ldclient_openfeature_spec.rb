@@ -2,6 +2,6 @@
 
 RSpec.describe LaunchDarkly::OpenFeature do
   it "has a version number" do
-    expect(LaunchDarkly::OpenFeature::VERSION).not_to be nil
+    expect(LaunchDarkly::OpenFeature::VERSION).not_to be_nil
   end
 end
