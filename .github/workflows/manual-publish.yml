@@ -41,12 +41,14 @@ jobs:
           dry_run: ${{ inputs.dry_run }}
 
       - name: Generate checksums file
+        if: ${{ !inputs.dry_run }}
         env:
           HASHES: ${{ steps.publish.outputs.gem-hash }}
         run: |
           echo "$HASHES" | base64 -d > checksums.txt
 
       - name: Attest build provenance
+        if: ${{ !inputs.dry_run }}
         uses: actions/attest@v4
         with:
           subject-checksums: checksums.txt
