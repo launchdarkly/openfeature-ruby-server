@@ -12,10 +12,7 @@ jobs:
       id-token: write # Needed if using OIDC to get release secrets.
       contents: write # Contents and pull-requests are for release-please to make releases.
       pull-requests: write
-    outputs:
-      release-created: ${{ steps.release.outputs.release_created }}
-      upload-tag-name: ${{ steps.release.outputs.tag_name }}
-      gem-hash: ${{ steps.publish.outputs.gem-hash}}
+      attestations: write
     steps:
       - uses: googleapis/release-please-action@16a9c90856f42705d54a6fda1823352bdc62cf38 # v4.4.0
         id: release
@@ -51,15 +48,8 @@ jobs:
         with:
           token: ${{secrets.GITHUB_TOKEN}}
 
-  release-provenance:
-    needs: [ 'release-package' ]
-    if: ${{ needs.release-package.outputs.release-created == 'true' }}
-    permissions:
-      actions: read
-      id-token: write
-      contents: write
-    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.0.0
-    with:
-      base64-subjects: "${{ needs.release-package.outputs.gem-hash }}"
-      upload-assets: true
-      upload-tag-name: ${{ needs.release-package.outputs.upload-tag-name }}
+      - name: Attest build provenance
+        if: ${{ steps.release.outputs.releases_created == 'true' }}
+        uses: actions/attest@v4
+        with:
+          subject-path: 'launchdarkly-openfeature-server-sdk-*.gem'

@@ -14,8 +14,7 @@ jobs:
     permissions:
       id-token: write
       contents: read
-    outputs:
-      gem-hash: ${{ steps.publish.outputs.gem-hash}}
+      attestations: write
     steps:
       - uses: actions/checkout@v4
 
@@ -37,13 +36,8 @@ jobs:
         with:
           dry_run: ${{ inputs.dry_run }}
 
-  release-provenance:
-    needs: [ 'build-publish' ]
-    permissions:
-      actions: read
-      id-token: write
-      contents: write
-    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.0.0
-    with:
-      base64-subjects: "${{ needs.build-publish.outputs.gem-hash }}"
-      upload-assets: ${{ !inputs.dry_run }}
+      - name: Attest build provenance
+        if: ${{ !inputs.dry_run }}
+        uses: actions/attest@v4
+        with:
+          subject-path: 'launchdarkly-openfeature-server-sdk-*.gem'
