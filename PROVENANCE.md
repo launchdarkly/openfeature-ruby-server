@@ -18,7 +18,7 @@ SDK_VERSION=0.1.0
 $ gem fetch launchdarkly-openfeature-server-sdk -v $SDK_VERSION
 
 # Verify provenance using the GitHub CLI
-$ gh attestation verify launchdarkly-openfeature-server-sdk-${SDK_VERSION}.gem -R launchdarkly/openfeature-ruby-server
+$ gh attestation verify launchdarkly-openfeature-server-sdk-${SDK_VERSION}.gem --owner launchdarkly
 ```
 
 Below is a sample of expected output.
@@ -26,11 +26,24 @@ Below is a sample of expected output.
 ```
 Loaded digest sha256:... for file://launchdarkly-openfeature-server-sdk-0.1.0.gem
 Loaded 1 attestation from GitHub API
+
+The following policy criteria will be enforced:
+- Predicate type must match:................ https://slsa.dev/provenance/v1
+- Source Repository Owner URI must match:... https://github.com/launchdarkly
+- Subject Alternative Name must match regex: (?i)^https://github.com/launchdarkly/
+- OIDC Issuer must match:................... https://token.actions.githubusercontent.com
+
 ✓ Verification succeeded!
 
-launchdarkly-openfeature-server-sdk-0.1.0.gem was attested by a trusted GitHub Actions workflow
+The following 1 attestation matched the policy criteria
+
+- Attestation #1
+  - Build repo:..... launchdarkly/openfeature-ruby-server
+  - Build workflow:. .github/workflows/release-please.yml
+  - Signer repo:.... launchdarkly/openfeature-ruby-server
+  - Signer workflow: .github/workflows/release-please.yml
 ```
 
 For more information, see [GitHub's documentation on verifying artifact attestations](https://docs.github.com/en/actions/security-for-github-actions/using-artifact-attestations/using-artifact-attestations-to-establish-provenance-for-builds#verifying-artifact-attestations-with-the-github-cli).
 
-**Note:** These instructions do not apply when building our SDKs from source.  
+**Note:** These instructions do not apply when building our SDKs from source.    
