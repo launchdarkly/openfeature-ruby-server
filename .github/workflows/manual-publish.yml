@@ -28,7 +28,7 @@ jobs:
         name: Build and Test
         uses: ./.github/actions/ci
         with:
-          ruby-version: 3.1
+          ruby-version: 3.4
 
       - id: publish
         name: Publish Package

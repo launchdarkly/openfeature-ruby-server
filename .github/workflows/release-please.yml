@@ -32,7 +32,7 @@ jobs:
       - uses: ./.github/actions/ci
         if: ${{ steps.release.outputs.releases_created == 'true' }}
         with:
-          ruby-version: 3.1
+          ruby-version: 3.4
 
       - uses: ./.github/actions/build-docs
         if: ${{ steps.release.outputs.releases_created == 'true' }}
