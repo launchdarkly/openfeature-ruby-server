@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
   spec.summary = "LaunchDarkly OpenFeature Server SDK"
   spec.description = "A LaunchDarkly provider for use with the OpenFeature SDK"
   spec.homepage = "https://github.com/launchdarkly/openfeature-ruby-server"
-  spec.required_ruby_version = ">= 3.1"
+  spec.required_ruby_version = ">= 3.4"
 
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = "https://github.com/launchdarkly/openfeature-ruby-server"
@@ -29,7 +29,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_runtime_dependency "launchdarkly-server-sdk", "~> 8.4"
-  spec.add_runtime_dependency "openfeature-sdk", "~> 0.4"
+  spec.add_runtime_dependency "openfeature-sdk", "~> 0.6.0"
 
   # For more information and examples about making a new gem, check out our
   # guide at: https://bundler.io/guides/creating_gem.html
