@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0](https://github.com/launchdarkly/openfeature-ruby-server/compare/0.1.0...0.2.0) (2026-04-02)
+
+
+### Features
+
+* Update to 0.6.x openfeature-sdk. ([#16](https://github.com/launchdarkly/openfeature-ruby-server/issues/16)) ([31e7222](https://github.com/launchdarkly/openfeature-ruby-server/commit/31e7222251e33a2fc7e7378d8734f0f09e6090c4))
+
 ## 0.1.0 (2024-08-05)
 
 
