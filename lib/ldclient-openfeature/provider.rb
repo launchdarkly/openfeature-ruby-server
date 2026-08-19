@@ -6,6 +6,8 @@ require 'open_feature/sdk'
 module LaunchDarkly
   module OpenFeature
     class Provider
+      include ::OpenFeature::SDK::Provider::EventEmitter
+
       #
       # Retrieve metadata information describing this provider.
       #
@@ -37,6 +39,9 @@ module LaunchDarkly
         @details_converter = Impl::ResolutionDetailsConverter.new
 
         @metadata = ::OpenFeature::SDK::Provider::ProviderMetadata.new(name: "launchdarkly-openfeature-server").freeze
+
+        @client.data_source_status_provider.add_listener(Impl::DataSourceStatusListener.new(self))
+        @client.flag_tracker.add_listener(Impl::FlagChangeListener.new(self))
       end
 
       def fetch_boolean_value(flag_key:, default_value:, evaluation_context: nil)

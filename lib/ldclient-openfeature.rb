@@ -2,6 +2,7 @@
 
 require_relative "ldclient-openfeature/impl/context_converter"
 require_relative "ldclient-openfeature/impl/details_converter"
+require_relative "ldclient-openfeature/impl/event_listeners"
 require_relative "ldclient-openfeature/provider"
 require_relative "ldclient-openfeature/version"
 
