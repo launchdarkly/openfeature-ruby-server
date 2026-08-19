@@ -27,13 +27,16 @@ module LaunchDarkly
       NUMERIC_TYPES = %i[integer float number].freeze
       private_constant :NUMERIC_TYPES
 
+      WRAPPER_NAME = "open-feature-ruby-server"
+      private_constant :WRAPPER_NAME
+
       #
       # @param sdk_key [String]
       # @param config [LaunchDarkly::Config]
       # @param wait_for_seconds [Float]
       #
       def initialize(sdk_key, config = LaunchDarkly::Config.default, wait_for_seconds = 5)
-        @client = LaunchDarkly::LDClient.new(sdk_key, config, wait_for_seconds)
+        @client = LaunchDarkly::LDClient.new(sdk_key, config.with_wrapper_information(WRAPPER_NAME, VERSION), wait_for_seconds)
 
         @logger = config.logger
         @context_converter = Impl::EvaluationContextConverter.new(config.logger)

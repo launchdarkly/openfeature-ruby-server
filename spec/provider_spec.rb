@@ -63,6 +63,19 @@ RSpec.describe LaunchDarkly::OpenFeature::Provider do
     expect(provider.client).to have_received(:close)
   end
 
+  it "reports itself as the wrapper to LaunchDarkly" do
+    allow(LaunchDarkly::LDClient).to receive(:new).and_return(instance_double(LaunchDarkly::LDClient))
+
+    described_class.new("example-key", config)
+
+    expect(LaunchDarkly::LDClient).to have_received(:new).with(
+      "example-key",
+      having_attributes(wrapper_name: "open-feature-ruby-server", wrapper_version: LaunchDarkly::OpenFeature::VERSION),
+      5
+    )
+    expect(config.wrapper_name).to be_nil
+  end
+
   it "not providing context returns error" do
     resolution_details = provider.fetch_boolean_value(flag_key: "flag-key", default_value: true)
 
