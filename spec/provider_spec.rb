@@ -64,7 +64,12 @@ RSpec.describe LaunchDarkly::OpenFeature::Provider do
   end
 
   it "reports itself as the wrapper to LaunchDarkly" do
-    allow(LaunchDarkly::LDClient).to receive(:new).and_return(instance_double(LaunchDarkly::LDClient))
+    client = instance_double(
+      LaunchDarkly::LDClient,
+      data_source_status_provider: double(add_listener: nil),
+      flag_tracker: double(add_listener: nil)
+    )
+    allow(LaunchDarkly::LDClient).to receive(:new).and_return(client)
 
     described_class.new("example-key", config)
 
