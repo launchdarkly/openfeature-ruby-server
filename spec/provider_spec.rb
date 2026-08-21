@@ -18,6 +18,31 @@ RSpec.describe LaunchDarkly::OpenFeature::Provider do
     expect(provider.client).to be_a LaunchDarkly::LDClient
   end
 
+  it "track sends a custom event for the provided context" do
+    allow(provider.client).to receive(:track)
+
+    provider.track("event-name", evaluation_context: evaluation_context)
+
+    expect(provider.client).to have_received(:track).with("event-name", instance_of(LaunchDarkly::LDContext), nil, nil)
+  end
+
+  it "track includes event details" do
+    details = OpenFeature::SDK::TrackingEventDetails.new(value: 3.14, category: "shopping")
+    allow(provider.client).to receive(:track)
+
+    provider.track("event-name", evaluation_context: evaluation_context, tracking_event_details: details)
+
+    expect(provider.client).to have_received(:track).with("event-name", instance_of(LaunchDarkly::LDContext), { "category" => "shopping" }, 3.14)
+  end
+
+  it "track without a context does not send an event" do
+    allow(provider.client).to receive(:track)
+
+    provider.track("event-name")
+
+    expect(provider.client).not_to have_received(:track)
+  end
+
   it "not providing context returns error" do
     resolution_details = provider.fetch_boolean_value(flag_key: "flag-key", default_value: true)
 

@@ -33,6 +33,7 @@ module LaunchDarkly
       def initialize(sdk_key, config = LaunchDarkly::Config.default, wait_for_seconds = 5)
         @client = LaunchDarkly::LDClient.new(sdk_key, config, wait_for_seconds)
 
+        @logger = config.logger
         @context_converter = Impl::EvaluationContextConverter.new(config.logger)
         @details_converter = Impl::ResolutionDetailsConverter.new
 
@@ -61,6 +62,32 @@ module LaunchDarkly
 
       def fetch_object_value(flag_key:, default_value:, evaluation_context: nil)
         resolve_value(:object, flag_key, default_value, evaluation_context)
+      end
+
+      #
+      # Track a custom event, which can be used as a metric for an experiment.
+      #
+      # @param tracking_event_name [String]
+      # @param evaluation_context [::OpenFeature::SDK::EvaluationContext, nil]
+      # @param tracking_event_details [::OpenFeature::SDK::TrackingEventDetails, nil]
+      #
+      # @return [void]
+      #
+      def track(tracking_event_name, evaluation_context: nil, tracking_event_details: nil)
+        if evaluation_context.nil?
+          @logger.warn(
+            "The track method was called without an evaluation context. No event will be sent to LaunchDarkly, " \
+            "because a context is required to associate the event with."
+          )
+          return
+        end
+
+        ld_context = @context_converter.to_ld_context(evaluation_context)
+
+        data = tracking_event_details&.fields
+        data = nil if data.nil? || data.empty?
+
+        @client.track(tracking_event_name, ld_context, data, tracking_event_details&.value)
       end
 
       #
