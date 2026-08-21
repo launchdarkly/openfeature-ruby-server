@@ -40,6 +40,31 @@ module LaunchDarkly
         @metadata = ::OpenFeature::SDK::Provider::ProviderMetadata.new(name: "launchdarkly-openfeature-server").freeze
       end
 
+      #
+      # Called by the OpenFeature SDK when this provider is set. The LaunchDarkly client has already been given the
+      # opportunity to initialize, so this only reports whether that succeeded.
+      #
+      # @param _evaluation_context [::OpenFeature::SDK::EvaluationContext, nil]
+      #
+      # @return [void]
+      #
+      def init(_evaluation_context = nil)
+        return if @client.initialized?
+
+        state = @client.data_source_status_provider.status.state
+        raise "the LaunchDarkly client was unable to initialize; the data source state is #{state}"
+      end
+
+      #
+      # Called by the OpenFeature SDK when this provider is replaced or the SDK is shut down. The LaunchDarkly client
+      # cannot be restarted, so a new provider instance is required afterward.
+      #
+      # @return [void]
+      #
+      def shutdown
+        @client.close
+      end
+
       def fetch_boolean_value(flag_key:, default_value:, evaluation_context: nil)
         resolve_value(:boolean, flag_key, default_value, evaluation_context)
       end

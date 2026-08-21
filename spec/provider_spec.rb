@@ -43,6 +43,26 @@ RSpec.describe LaunchDarkly::OpenFeature::Provider do
     expect(provider.client).not_to have_received(:track)
   end
 
+  it "init succeeds when the client is initialized" do
+    expect { provider.init(evaluation_context) }.not_to raise_error
+  end
+
+  it "init raises when the client failed to initialize" do
+    status = LaunchDarkly::Interfaces::DataSource::Status.new(LaunchDarkly::Interfaces::DataSource::Status::OFF, Time.now, nil)
+    status_provider = double(status: status)
+    allow(provider.client).to receive_messages(initialized?: false, data_source_status_provider: status_provider)
+
+    expect { provider.init(evaluation_context) }.to raise_error(/unable to initialize/)
+  end
+
+  it "shutdown closes the client" do
+    allow(provider.client).to receive(:close)
+
+    provider.shutdown
+
+    expect(provider.client).to have_received(:close)
+  end
+
   it "not providing context returns error" do
     resolution_details = provider.fetch_boolean_value(flag_key: "flag-key", default_value: true)
 
