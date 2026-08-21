@@ -34,4 +34,54 @@ RSpec.describe LaunchDarkly::OpenFeature::Impl::ResolutionDetailsConverter do
       expect(resolution_details.error_code).to eq(of_error_code)
     end
   end
+
+  it "includes the variation index in the flag metadata" do
+    detail = LaunchDarkly::EvaluationDetail.new(true, 1, LaunchDarkly::EvaluationReason::fallthrough)
+    resolution_details = details_converter.to_resolution_details(detail)
+
+    expect(resolution_details.flag_metadata).to eq({'variationIndex' => 1})
+  end
+
+  it "omits the variation index from the flag metadata for default values" do
+    detail = LaunchDarkly::EvaluationDetail.new(true, nil, LaunchDarkly::EvaluationReason::error(LaunchDarkly::EvaluationReason::ERROR_FLAG_NOT_FOUND))
+    resolution_details = details_converter.to_resolution_details(detail)
+
+    expect(resolution_details.flag_metadata).to eq({})
+  end
+
+  it "includes in experiment in the flag metadata for experiment evaluations" do
+    detail = LaunchDarkly::EvaluationDetail.new(true, 1, LaunchDarkly::EvaluationReason::fallthrough(true))
+    resolution_details = details_converter.to_resolution_details(detail)
+
+    expect(resolution_details.flag_metadata).to eq({'variationIndex' => 1, 'inExperiment' => true})
+  end
+
+  it "omits in experiment from the flag metadata for non-experiment evaluations" do
+    detail = LaunchDarkly::EvaluationDetail.new(true, 1, LaunchDarkly::EvaluationReason::fallthrough(false))
+    resolution_details = details_converter.to_resolution_details(detail)
+
+    expect(resolution_details.flag_metadata).not_to have_key('inExperiment')
+  end
+
+  it "includes the rule in the flag metadata for rule matches" do
+    detail = LaunchDarkly::EvaluationDetail.new(true, 1, LaunchDarkly::EvaluationReason::rule_match(2, 'the-rule-id', false))
+    resolution_details = details_converter.to_resolution_details(detail)
+
+    expect(resolution_details.flag_metadata).to eq({'variationIndex' => 1, 'ruleIndex' => 2, 'ruleId' => 'the-rule-id'})
+  end
+
+  it "includes the prerequisite key in the flag metadata for failed prerequisites" do
+    detail = LaunchDarkly::EvaluationDetail.new(true, 1, LaunchDarkly::EvaluationReason::prerequisite_failed('the-prerequisite-key'))
+    resolution_details = details_converter.to_resolution_details(detail)
+
+    expect(resolution_details.flag_metadata).to eq({'variationIndex' => 1, 'prerequisiteKey' => 'the-prerequisite-key'})
+  end
+
+  it "includes the big segments status in the flag metadata" do
+    reason = LaunchDarkly::EvaluationReason::fallthrough.with_big_segments_status(LaunchDarkly::BigSegmentsStatus::STALE)
+    detail = LaunchDarkly::EvaluationDetail.new(true, 1, reason)
+    resolution_details = details_converter.to_resolution_details(detail)
+
+    expect(resolution_details.flag_metadata).to eq({'variationIndex' => 1, 'bigSegmentsStatus' => 'STALE'})
+  end
 end

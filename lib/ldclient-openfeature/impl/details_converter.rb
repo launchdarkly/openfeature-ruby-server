@@ -7,6 +7,16 @@ module LaunchDarkly
   module OpenFeature
     module Impl
       class ResolutionDetailsConverter
+        VARIATION_INDEX_KEY = 'variationIndex'
+        IN_EXPERIMENT_KEY = 'inExperiment'
+        RULE_INDEX_KEY = 'ruleIndex'
+        RULE_ID_KEY = 'ruleId'
+        PREREQUISITE_KEY_KEY = 'prerequisiteKey'
+        BIG_SEGMENTS_STATUS_KEY = 'bigSegmentsStatus'
+
+        private_constant :VARIATION_INDEX_KEY, :IN_EXPERIMENT_KEY, :RULE_INDEX_KEY, :RULE_ID_KEY,
+          :PREREQUISITE_KEY_KEY, :BIG_SEGMENTS_STATUS_KEY
+
         #
         # @param detail [LaunchDarkly::EvaluationDetail]
         #
@@ -35,8 +45,28 @@ module LaunchDarkly
             error_code: openfeature_error_code,
             error_message: nil,
             reason: openfeature_reason,
-            variant: openfeature_variant
+            variant: openfeature_variant,
+            flag_metadata: flag_metadata(reason, is_default ? nil : variation_index)
           )
+        end
+
+        #
+        # @param reason [LaunchDarkly::EvaluationReason]
+        # @param variation_index [Integer, nil]
+        #
+        # @return [Hash]
+        #
+        private def flag_metadata(reason, variation_index)
+          metadata = {}
+
+          metadata[VARIATION_INDEX_KEY] = variation_index unless variation_index.nil?
+          metadata[IN_EXPERIMENT_KEY] = true if reason.in_experiment
+          metadata[RULE_INDEX_KEY] = reason.rule_index unless reason.rule_index.nil?
+          metadata[RULE_ID_KEY] = reason.rule_id unless reason.rule_id.nil?
+          metadata[PREREQUISITE_KEY_KEY] = reason.prerequisite_key unless reason.prerequisite_key.nil?
+          metadata[BIG_SEGMENTS_STATUS_KEY] = reason.big_segments_status.to_s unless reason.big_segments_status.nil?
+
+          metadata
         end
 
         #

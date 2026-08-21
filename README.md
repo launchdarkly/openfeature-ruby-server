@@ -147,6 +147,24 @@ attributes = {
 context = EvaluationContext(**attributes)
 ```
 
+### Flag Metadata
+
+Evaluations include flag metadata for the LaunchDarkly specific parts of the evaluation result which have no OpenFeature equivalent. Each entry is absent when it does not apply to the evaluation.
+
+| Key                 | Type    | Description                                                        |
+|---------------------|---------|--------------------------------------------------------------------|
+| `variationIndex`    | integer | The index of the returned variation. Absent for default values.    |
+| `inExperiment`      | boolean | Present, and `true`, when the evaluation was part of an experiment. |
+| `ruleIndex`         | integer | The index of the rule that matched.                                |
+| `ruleId`            | string  | The identifier of the rule that matched.                           |
+| `prerequisiteKey`   | string  | The key of the prerequisite flag that failed.                       |
+| `bigSegmentsStatus` | string  | The status of the Big Segments query made during the evaluation.   |
+
+```ruby
+details = client.fetch_boolean_details(flag_key: "my-flag", default_value: false)
+in_experiment = details.flag_metadata.fetch("inExperiment", false)
+```
+
 ## Learn more
 
 Check out our [documentation](http://docs.launchdarkly.com) for in-depth instructions on configuring and using LaunchDarkly. You can also head straight to the [complete reference guide for this SDK](https://docs.launchdarkly.com/sdk/server-side/ruby).
