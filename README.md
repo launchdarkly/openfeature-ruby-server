@@ -26,6 +26,27 @@ This provider is designed primarily for use in multi-user systems such as web se
 
 This version of the LaunchDarkly provider works with Ruby 3.4 and above.
 
+## Feature matrix
+
+This matrix mirrors the [feature matrix of the OpenFeature SDK for Ruby](https://github.com/open-feature/ruby-sdk#-features) and describes what this provider supports. Rows which are not supported state whether the limitation comes from the OpenFeature Ruby SDK or from the provider.
+
+| Status | Feature                         | Notes                                                                                                                                                                                                                    |
+|--------|---------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ✅      | Providers                       | Evaluates boolean, string, integer, float, number, and object flags through the LaunchDarkly Ruby SDK.                                                                                                                    |
+| ✅      | Targeting                       | The `EvaluationContext` is converted to a LaunchDarkly single or multi-context. See [OpenFeature Specific Considerations](#openfeature-specific-considerations).                                                          |
+| ✅      | Hooks                           | Hooks are registered on the OpenFeature API and client; the provider requires no additional support and its results are visible to hooks, including [flag metadata](#flag-metadata).                                      |
+| ✅      | Logging                         | The provider logs through the logger of the `LaunchDarkly::Config` it is given.                                                                                                                                           |
+| ✅      | Domains                         | Domains bind clients to providers in the OpenFeature SDK; a separate provider instance may be registered per domain.                                                                                                      |
+| ✅      | Eventing                        | LaunchDarkly data source status changes are emitted as `PROVIDER_READY`, `PROVIDER_STALE`, and `PROVIDER_ERROR`. Flag changes are emitted as `PROVIDER_CONFIGURATION_CHANGED` with the changed flag key.                  |
+| ✅      | Initialization                  | `init` reports whether the LaunchDarkly client became ready within the configured wait time; a failure results in the `ERROR` state so that cached or fallback flag data is still evaluated.                              |
+| ✅      | Shutdown                        | `shutdown` closes the LaunchDarkly client. A closed client cannot be restarted, so a new provider instance is required afterward.                                                                                        |
+| ✅      | Tracking                        | `track` sends a LaunchDarkly custom event for the evaluation context, with the tracking event value and remaining details attached.                                                                                       |
+| ✅      | Transaction Context Propagation | Provided by the OpenFeature SDK, which merges the transaction context into the evaluation context before the provider is called; no provider support is required.                                                         |
+| ✅      | Extending                       | This provider is itself an extension of the OpenFeature SDK. The underlying LaunchDarkly client is available through `provider.client` for functionality with no OpenFeature equivalent.                                  |
+| ✅      | Flag metadata                   | LaunchDarkly evaluation reason details are returned as OpenFeature flag metadata. See [Flag Metadata](#flag-metadata).                                                                                                    |
+
+<sub>Supported: ✅ | Partially supported: ⚠️ | Not supported: ❌</sub>
+
 ## Getting started
 
 ### Requisites
