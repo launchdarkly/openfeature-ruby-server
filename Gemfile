@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-source "https://rubygems.org"
+source "https://rubygems.org", cooldown: 3
 
 # Specify your gem's dependencies in launchdarkly-openfeature-server-sdk.gemspec
 gemspec
