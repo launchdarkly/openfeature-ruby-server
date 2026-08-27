@@ -23,4 +23,4 @@ runs:
 
     - name: Run RuboCop
       shell: bash
-      run: bundle exec rubocop --parallel
+      run: bundle exec rubocop
