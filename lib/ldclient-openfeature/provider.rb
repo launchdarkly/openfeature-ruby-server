@@ -45,8 +45,8 @@ module LaunchDarkly
 
         @metadata = ::OpenFeature::SDK::Provider::ProviderMetadata.new(name: "launchdarkly-openfeature-server").freeze
 
-        @client.data_source_status_provider.add_listener(Impl::DataSourceStatusListener.new(self))
-        @client.flag_tracker.add_listener(Impl::FlagChangeListener.new(self))
+        @status_listener = Impl::DataSourceStatusListener.new(self)
+        @flag_change_listener = Impl::FlagChangeListener.new(self)
       end
 
       #
@@ -63,10 +63,12 @@ module LaunchDarkly
       def init(_evaluation_context = nil)
         wait_for_data_source_outcome if @wait_for_seconds.to_f <= 0
 
-        return if @client.initialized?
+        unless @client.initialized?
+          state = @client.data_source_status_provider.status.state
+          raise "the LaunchDarkly client was unable to initialize; the data source state is #{state}"
+        end
 
-        state = @client.data_source_status_provider.status.state
-        raise "the LaunchDarkly client was unable to initialize; the data source state is #{state}"
+        start_emitting_events
       end
 
       #
@@ -76,6 +78,8 @@ module LaunchDarkly
       # @return [void]
       #
       def shutdown
+        @client.data_source_status_provider.remove_listener(@status_listener)
+        @client.flag_tracker.remove_listener(@flag_change_listener)
         @client.close
       end
 
@@ -174,6 +178,17 @@ module LaunchDarkly
         end
 
         @details_converter.to_resolution_details(evaluation_detail)
+      end
+
+      #
+      # Subscribe to the changes which are emitted as provider events. The OpenFeature SDK emits an event of its own
+      # for the outcome of initialization, so subscribing afterward avoids duplicating it.
+      #
+      # @return [void]
+      #
+      private def start_emitting_events
+        @client.data_source_status_provider.add_listener(@status_listener)
+        @client.flag_tracker.add_listener(@flag_change_listener)
       end
 
       #

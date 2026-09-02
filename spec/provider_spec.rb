@@ -93,6 +93,40 @@ RSpec.describe LaunchDarkly::OpenFeature::Provider do
     expect(status_provider).not_to have_received(:add_listener)
   end
 
+  it "does not emit events before initialization" do
+    status_provider = double(add_listener: nil)
+    flag_tracker = double(add_listener: nil)
+    allow(LaunchDarkly::LDClient).to receive(:new)
+      .and_return(instance_double(LaunchDarkly::LDClient, data_source_status_provider: status_provider, flag_tracker: flag_tracker))
+
+    described_class.new("example-key", config)
+
+    expect(status_provider).not_to have_received(:add_listener)
+    expect(flag_tracker).not_to have_received(:add_listener)
+  end
+
+  it "emits events once initialization has succeeded" do
+    status_provider = double(add_listener: nil, status: data_source_status(LaunchDarkly::Interfaces::DataSource::Status::VALID))
+    flag_tracker = double(add_listener: nil)
+    allow(provider.client).to receive_messages(data_source_status_provider: status_provider, flag_tracker: flag_tracker)
+
+    provider.init(evaluation_context)
+
+    expect(status_provider).to have_received(:add_listener).with(instance_of(LaunchDarkly::OpenFeature::Impl::DataSourceStatusListener))
+    expect(flag_tracker).to have_received(:add_listener).with(instance_of(LaunchDarkly::OpenFeature::Impl::FlagChangeListener))
+  end
+
+  it "does not emit events when initialization has failed" do
+    status_provider = double(add_listener: nil, status: data_source_status(LaunchDarkly::Interfaces::DataSource::Status::OFF))
+    flag_tracker = double(add_listener: nil)
+    allow(provider.client).to receive_messages(initialized?: false, data_source_status_provider: status_provider, flag_tracker: flag_tracker)
+
+    expect { provider.init(evaluation_context) }.to raise_error(/unable to initialize/)
+
+    expect(status_provider).not_to have_received(:add_listener)
+    expect(flag_tracker).not_to have_received(:add_listener)
+  end
+
   it "shutdown closes the client" do
     allow(provider.client).to receive(:close)
 
