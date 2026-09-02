@@ -55,6 +55,31 @@ module LaunchDarkly
       end
 
       #
+      # Reports the first data source state which decides the outcome of the client's initial connection attempt.
+      #
+      class DataSourceOutcomeListener
+        #
+        # @param outcome [Queue]
+        #
+        def initialize(outcome)
+          @outcome = outcome
+        end
+
+        #
+        # @param status [LaunchDarkly::Interfaces::DataSource::Status]
+        #
+        # @return [void]
+        #
+        def update(status)
+          case status.state
+          when ::LaunchDarkly::Interfaces::DataSource::Status::VALID,
+            ::LaunchDarkly::Interfaces::DataSource::Status::OFF
+            @outcome.push(status.state)
+          end
+        end
+      end
+
+      #
       # Translates LaunchDarkly flag change events into OpenFeature configuration changed events.
       #
       class FlagChangeListener

@@ -38,6 +38,7 @@ module LaunchDarkly
       def initialize(sdk_key, config = LaunchDarkly::Config.default, wait_for_seconds = 5)
         @client = LaunchDarkly::LDClient.new(sdk_key, config.with_wrapper_information(WRAPPER_NAME, VERSION), wait_for_seconds)
 
+        @wait_for_seconds = wait_for_seconds
         @logger = config.logger
         @context_converter = Impl::EvaluationContextConverter.new(config.logger)
         @details_converter = Impl::ResolutionDetailsConverter.new
@@ -49,14 +50,19 @@ module LaunchDarkly
       end
 
       #
-      # Called by the OpenFeature SDK when this provider is set. The LaunchDarkly client has already been given the
-      # opportunity to initialize, so this only reports whether that succeeded.
+      # Called by the OpenFeature SDK when this provider is set.
+      #
+      # A positive wait time has already been applied by the LaunchDarkly client constructor, so this reports whether
+      # that succeeded. A wait time of zero asks for no deadline, so this waits for the data source to become valid or
+      # to fail permanently.
       #
       # @param _evaluation_context [::OpenFeature::SDK::EvaluationContext, nil]
       #
       # @return [void]
       #
       def init(_evaluation_context = nil)
+        wait_for_data_source_outcome if @wait_for_seconds.to_f <= 0
+
         return if @client.initialized?
 
         state = @client.data_source_status_provider.status.state
@@ -168,6 +174,27 @@ module LaunchDarkly
         end
 
         @details_converter.to_resolution_details(evaluation_detail)
+      end
+
+      #
+      # Block until the data source reports an outcome for the client's first connection attempt.
+      #
+      # @return [void]
+      #
+      private def wait_for_data_source_outcome
+        outcome = Queue.new
+        listener = Impl::DataSourceOutcomeListener.new(outcome)
+        status_provider = @client.data_source_status_provider
+        status_provider.add_listener(listener)
+
+        begin
+          return if @client.initialized?
+          return if status_provider.status.state == ::LaunchDarkly::Interfaces::DataSource::Status::OFF
+
+          outcome.pop
+        ensure
+          status_provider.remove_listener(listener)
+        end
       end
 
       #
