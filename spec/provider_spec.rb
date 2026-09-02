@@ -10,6 +10,10 @@ RSpec.describe LaunchDarkly::OpenFeature::Provider do
   let(:config) { LaunchDarkly::Config.new(data_source: td, send_events: false) }
   let(:provider) { described_class.new("example-key", config) }
 
+  def data_source_status(state, error = nil)
+    LaunchDarkly::Interfaces::DataSource::Status.new(state, Time.now, error)
+  end
+
   it "metadata is set correctly" do
     expect(provider.metadata.name).to eq("launchdarkly-openfeature-server")
   end
@@ -48,11 +52,45 @@ RSpec.describe LaunchDarkly::OpenFeature::Provider do
   end
 
   it "init raises when the client failed to initialize" do
-    status = LaunchDarkly::Interfaces::DataSource::Status.new(LaunchDarkly::Interfaces::DataSource::Status::OFF, Time.now, nil)
-    status_provider = double(status: status)
+    status_provider = double(status: data_source_status(LaunchDarkly::Interfaces::DataSource::Status::OFF))
     allow(provider.client).to receive_messages(initialized?: false, data_source_status_provider: status_provider)
 
     expect { provider.init(evaluation_context) }.to raise_error(/unable to initialize/)
+  end
+
+  it "init with no wait time waits for the data source to become valid" do
+    zero_wait_provider = described_class.new("example-key", config, 0)
+
+    expect { zero_wait_provider.init(evaluation_context) }.not_to raise_error
+    expect(zero_wait_provider.client.initialized?).to be(true)
+  end
+
+  it "init with no wait time waits for a data source outcome which arrives later" do
+    zero_wait_provider = described_class.new("example-key", config, 0)
+    listeners = []
+    status_provider = double(status: data_source_status(LaunchDarkly::Interfaces::DataSource::Status::INITIALIZING))
+    allow(status_provider).to receive(:add_listener) { |listener| listeners << listener }
+    allow(status_provider).to receive(:remove_listener)
+    allow(zero_wait_provider.client).to receive_messages(initialized?: false, data_source_status_provider: status_provider)
+
+    reporter = Thread.new do
+      sleep(0.01) while listeners.empty?
+      listeners.each { |listener| listener.update(data_source_status(LaunchDarkly::Interfaces::DataSource::Status::OFF)) }
+    end
+
+    expect { zero_wait_provider.init(evaluation_context) }.to raise_error(/unable to initialize/)
+
+    reporter.join
+  end
+
+  it "init with a wait time does not wait again" do
+    wait_provider = described_class.new("example-key", config, 5)
+    status_provider = double(status: data_source_status(LaunchDarkly::Interfaces::DataSource::Status::INITIALIZING))
+    allow(status_provider).to receive(:add_listener)
+    allow(wait_provider.client).to receive_messages(initialized?: false, data_source_status_provider: status_provider)
+
+    expect { wait_provider.init(evaluation_context) }.to raise_error(/unable to initialize/)
+    expect(status_provider).not_to have_received(:add_listener)
   end
 
   it "shutdown closes the client" do
