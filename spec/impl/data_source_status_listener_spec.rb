@@ -34,6 +34,21 @@ RSpec.describe LaunchDarkly::OpenFeature::Impl::DataSourceStatusListener do
     )
   end
 
+  it "a repeated provider status does not emit a second event" do
+    listener.update(status(LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED))
+    listener.update(status(LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED))
+
+    expect(provider).to have_received(:emit_event).once
+  end
+
+  it "a changed provider status emits an event again" do
+    listener.update(status(LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED))
+    listener.update(status(LaunchDarkly::Interfaces::DataSource::Status::VALID))
+    listener.update(status(LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED))
+
+    expect(provider).to have_received(:emit_event).exactly(3).times
+  end
+
   it "an initializing data source does not emit an event" do
     listener.update(status(LaunchDarkly::Interfaces::DataSource::Status::INITIALIZING))
 
