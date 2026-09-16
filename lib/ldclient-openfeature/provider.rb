@@ -33,10 +33,11 @@ module LaunchDarkly
       #
       # @param sdk_key [String]
       # @param config [LaunchDarkly::Config]
-      # @param wait_for_seconds [Float]
+      # @param wait_for_seconds [Float, nil] the number of seconds to wait for the client to become ready, or nil to
+      #   wait for it without a deadline
       #
       def initialize(sdk_key, config = LaunchDarkly::Config.default, wait_for_seconds = 5)
-        @client = LaunchDarkly::LDClient.new(sdk_key, config.with_wrapper_information(WRAPPER_NAME, VERSION), wait_for_seconds)
+        @client = LaunchDarkly::LDClient.new(sdk_key, config.with_wrapper_information(WRAPPER_NAME, VERSION), wait_for_seconds.nil? ? 0 : wait_for_seconds)
 
         @wait_for_seconds = wait_for_seconds
         @logger = config.logger
@@ -52,16 +53,16 @@ module LaunchDarkly
       #
       # Called by the OpenFeature SDK when this provider is set.
       #
-      # A positive wait time has already been applied by the LaunchDarkly client constructor, so this reports whether
-      # that succeeded. A wait time of zero asks for no deadline, so this waits for the data source to become valid or
-      # to fail permanently.
+      # A wait time has already been applied by the LaunchDarkly client constructor, so this reports whether that
+      # succeeded. A nil wait time asks for no deadline, so this waits for the data source to become valid or to fail
+      # permanently.
       #
       # @param _evaluation_context [::OpenFeature::SDK::EvaluationContext, nil]
       #
       # @return [void]
       #
       def init(_evaluation_context = nil)
-        wait_for_data_source_outcome if @wait_for_seconds.to_f <= 0
+        wait_for_data_source_outcome if @wait_for_seconds.nil?
 
         return if @client.initialized?
 

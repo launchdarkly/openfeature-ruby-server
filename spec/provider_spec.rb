@@ -58,29 +58,39 @@ RSpec.describe LaunchDarkly::OpenFeature::Provider do
     expect { provider.init(evaluation_context) }.to raise_error(/unable to initialize/)
   end
 
-  it "init with no wait time waits for the data source to become valid" do
-    zero_wait_provider = described_class.new("example-key", config, 0)
+  it "init without a deadline waits for the data source to become valid" do
+    indefinite_provider = described_class.new("example-key", config, nil)
 
-    expect { zero_wait_provider.init(evaluation_context) }.not_to raise_error
-    expect(zero_wait_provider.client.initialized?).to be(true)
+    expect { indefinite_provider.init(evaluation_context) }.not_to raise_error
+    expect(indefinite_provider.client.initialized?).to be(true)
   end
 
-  it "init with no wait time waits for a data source outcome which arrives later" do
-    zero_wait_provider = described_class.new("example-key", config, 0)
+  it "init without a deadline waits for a data source outcome which arrives later" do
+    indefinite_provider = described_class.new("example-key", config, nil)
     listeners = []
     status_provider = double(status: data_source_status(LaunchDarkly::Interfaces::DataSource::Status::INITIALIZING))
     allow(status_provider).to receive(:add_listener) { |listener| listeners << listener }
     allow(status_provider).to receive(:remove_listener)
-    allow(zero_wait_provider.client).to receive_messages(initialized?: false, data_source_status_provider: status_provider)
+    allow(indefinite_provider.client).to receive_messages(initialized?: false, data_source_status_provider: status_provider)
 
     reporter = Thread.new do
       sleep(0.01) while listeners.empty?
       listeners.each { |listener| listener.update(data_source_status(LaunchDarkly::Interfaces::DataSource::Status::OFF)) }
     end
 
-    expect { zero_wait_provider.init(evaluation_context) }.to raise_error(/unable to initialize/)
+    expect { indefinite_provider.init(evaluation_context) }.to raise_error(/unable to initialize/)
 
     reporter.join
+  end
+
+  it "init with a wait time of zero does not wait" do
+    zero_wait_provider = described_class.new("example-key", config, 0)
+    status_provider = double(status: data_source_status(LaunchDarkly::Interfaces::DataSource::Status::INITIALIZING))
+    allow(status_provider).to receive(:add_listener)
+    allow(zero_wait_provider.client).to receive_messages(initialized?: false, data_source_status_provider: status_provider)
+
+    expect { zero_wait_provider.init(evaluation_context) }.to raise_error(/unable to initialize/)
+    expect(status_provider).not_to have_received(:add_listener)
   end
 
   it "init with a wait time does not wait again" do
