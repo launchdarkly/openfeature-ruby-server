@@ -15,8 +15,6 @@ module LaunchDarkly
         #
         def initialize(provider)
           @provider = provider
-          @lock = Mutex.new
-          @last_event = nil
         end
 
         #
@@ -27,39 +25,19 @@ module LaunchDarkly
         def update(status)
           case status.state
           when ::LaunchDarkly::Interfaces::DataSource::Status::VALID
-            emit_once(::OpenFeature::SDK::ProviderEvent::PROVIDER_READY)
+            @provider.emit_status_event(::OpenFeature::SDK::ProviderEvent::PROVIDER_READY)
           when ::LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED
-            emit_once(
+            @provider.emit_status_event(
               ::OpenFeature::SDK::ProviderEvent::PROVIDER_STALE,
               message: message(status, "the data source has been interrupted")
             )
           when ::LaunchDarkly::Interfaces::DataSource::Status::OFF
-            emit_once(
+            @provider.emit_status_event(
               ::OpenFeature::SDK::ProviderEvent::PROVIDER_ERROR,
               error_code: ::OpenFeature::SDK::Provider::ErrorCode::GENERAL,
               message: message(status, "the data source has been permanently shut down")
             )
           end
-        end
-
-        #
-        # Emit an event only when it reports a different provider status than the last one emitted. Several data
-        # source states can map to the same provider status, and a repeated status is not a change the application
-        # can act on.
-        #
-        # @param event [Symbol]
-        # @param details [Hash]
-        #
-        # @return [void]
-        #
-        private def emit_once(event, **details)
-          @lock.synchronize do
-            return if @last_event == event
-
-            @last_event = event
-          end
-
-          @provider.emit_event(event, **details)
         end
 
         #
