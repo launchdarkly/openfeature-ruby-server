@@ -103,6 +103,38 @@ RSpec.describe LaunchDarkly::OpenFeature::Provider do
     expect(status_provider).not_to have_received(:add_listener)
   end
 
+  it "a status change before initialization completes is not emitted" do
+    allow(provider).to receive(:emit_event)
+
+    provider.emit_status_event(OpenFeature::SDK::ProviderEvent::PROVIDER_READY)
+
+    expect(provider).not_to have_received(:emit_event)
+  end
+
+  it "a status change after initialization failed is emitted" do
+    status_provider = double(status: data_source_status(LaunchDarkly::Interfaces::DataSource::Status::OFF))
+    allow(provider.client).to receive_messages(initialized?: false, data_source_status_provider: status_provider)
+    expect { provider.init(evaluation_context) }.to raise_error(/unable to initialize/)
+    allow(provider).to receive(:emit_event)
+
+    provider.emit_status_event(OpenFeature::SDK::ProviderEvent::PROVIDER_READY)
+
+    expect(provider).to have_received(:emit_event).with(OpenFeature::SDK::ProviderEvent::PROVIDER_READY)
+  end
+
+  it "a status which does not change is not emitted" do
+    provider.init(evaluation_context)
+    allow(provider).to receive(:emit_event)
+
+    provider.emit_status_event(OpenFeature::SDK::ProviderEvent::PROVIDER_READY)
+    provider.emit_status_event(OpenFeature::SDK::ProviderEvent::PROVIDER_STALE, message: "interrupted")
+    provider.emit_status_event(OpenFeature::SDK::ProviderEvent::PROVIDER_STALE, message: "interrupted again")
+
+    expect(provider).to have_received(:emit_event).once
+    expect(provider).to have_received(:emit_event)
+      .with(OpenFeature::SDK::ProviderEvent::PROVIDER_STALE, hash_including(:message))
+  end
+
   it "shutdown closes the client" do
     allow(provider.client).to receive(:close)
 

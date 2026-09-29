@@ -40,6 +40,9 @@ module LaunchDarkly
         @client = LaunchDarkly::LDClient.new(sdk_key, config.with_wrapper_information(WRAPPER_NAME, VERSION), wait_for_seconds.nil? ? 0 : wait_for_seconds)
 
         @wait_for_seconds = wait_for_seconds
+        @status_lock = Mutex.new
+        @status_event = nil
+        @initialization_complete = false
         @logger = config.logger
         @context_converter = Impl::EvaluationContextConverter.new(config.logger)
         @details_converter = Impl::ResolutionDetailsConverter.new
@@ -64,10 +67,46 @@ module LaunchDarkly
       def init(_evaluation_context = nil)
         wait_for_data_source_outcome if @wait_for_seconds.nil?
 
-        return if @client.initialized?
+        initialized = @client.initialized?
+
+        @status_lock.synchronize do
+          # The OpenFeature SDK emits its own event for the outcome of initialization, so the status is recorded
+          # here without emitting an event.
+          @status_event = if initialized
+                            ::OpenFeature::SDK::ProviderEvent::PROVIDER_READY
+                          else
+                            ::OpenFeature::SDK::ProviderEvent::PROVIDER_ERROR
+                          end
+          @initialization_complete = true
+        end
+
+        return if initialized
 
         state = @client.data_source_status_provider.status.state
         raise "the LaunchDarkly client was unable to initialize; the data source state is #{state}"
+      end
+
+      #
+      # Emit a provider event for a data source state change.
+      #
+      # A state which does not change the provider status is not emitted, and neither is the change which completes
+      # initialization, because the OpenFeature SDK emits its own event for that one. Changes after initialization has
+      # completed, including after it has failed, are emitted.
+      #
+      # @param event [String]
+      # @param details [Hash]
+      #
+      # @return [void]
+      #
+      def emit_status_event(event, **details)
+        @status_lock.synchronize do
+          return if event == @status_event
+
+          @status_event = event
+          return unless @initialization_complete
+        end
+
+        emit_event(event, **details)
       end
 
       #

@@ -25,14 +25,14 @@ module LaunchDarkly
         def update(status)
           case status.state
           when ::LaunchDarkly::Interfaces::DataSource::Status::VALID
-            @provider.emit_event(::OpenFeature::SDK::ProviderEvent::PROVIDER_READY)
+            @provider.emit_status_event(::OpenFeature::SDK::ProviderEvent::PROVIDER_READY)
           when ::LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED
-            @provider.emit_event(
+            @provider.emit_status_event(
               ::OpenFeature::SDK::ProviderEvent::PROVIDER_STALE,
               message: message(status, "the data source has been interrupted")
             )
           when ::LaunchDarkly::Interfaces::DataSource::Status::OFF
-            @provider.emit_event(
+            @provider.emit_status_event(
               ::OpenFeature::SDK::ProviderEvent::PROVIDER_ERROR,
               error_code: ::OpenFeature::SDK::Provider::ErrorCode::GENERAL,
               message: message(status, "the data source has been permanently shut down")
