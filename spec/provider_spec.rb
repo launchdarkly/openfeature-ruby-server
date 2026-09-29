@@ -52,7 +52,7 @@ RSpec.describe LaunchDarkly::OpenFeature::Provider do
   end
 
   it "init raises when the client failed to initialize" do
-    status_provider = double(status: data_source_status(LaunchDarkly::Interfaces::DataSource::Status::OFF))
+    status_provider = double(add_listener: nil, status: data_source_status(LaunchDarkly::Interfaces::DataSource::Status::OFF))
     allow(provider.client).to receive_messages(initialized?: false, data_source_status_provider: status_provider)
 
     expect { provider.init(evaluation_context) }.to raise_error(/unable to initialize/)
@@ -91,6 +91,7 @@ RSpec.describe LaunchDarkly::OpenFeature::Provider do
 
     expect { wait_provider.init(evaluation_context) }.to raise_error(/unable to initialize/)
     expect(status_provider).not_to have_received(:add_listener)
+      .with(instance_of(LaunchDarkly::OpenFeature::Impl::DataSourceOutcomeListener))
   end
 
   it "does not emit events before initialization" do
@@ -116,15 +117,15 @@ RSpec.describe LaunchDarkly::OpenFeature::Provider do
     expect(flag_tracker).to have_received(:add_listener).with(instance_of(LaunchDarkly::OpenFeature::Impl::FlagChangeListener))
   end
 
-  it "does not emit events when initialization has failed" do
+  it "emits events when initialization has failed so a later recovery is reported" do
     status_provider = double(add_listener: nil, status: data_source_status(LaunchDarkly::Interfaces::DataSource::Status::OFF))
     flag_tracker = double(add_listener: nil)
     allow(provider.client).to receive_messages(initialized?: false, data_source_status_provider: status_provider, flag_tracker: flag_tracker)
 
     expect { provider.init(evaluation_context) }.to raise_error(/unable to initialize/)
 
-    expect(status_provider).not_to have_received(:add_listener)
-    expect(flag_tracker).not_to have_received(:add_listener)
+    expect(status_provider).to have_received(:add_listener).with(instance_of(LaunchDarkly::OpenFeature::Impl::DataSourceStatusListener))
+    expect(flag_tracker).to have_received(:add_listener).with(instance_of(LaunchDarkly::OpenFeature::Impl::FlagChangeListener))
   end
 
   it "shutdown closes the client" do

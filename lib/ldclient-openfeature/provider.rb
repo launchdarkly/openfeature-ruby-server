@@ -54,7 +54,8 @@ module LaunchDarkly
       #
       # A positive wait time has already been applied by the LaunchDarkly client constructor, so this reports whether
       # that succeeded. A wait time of zero asks for no deadline, so this waits for the data source to become valid or
-      # to fail permanently.
+      # to fail permanently. Events are emitted either way, because a client which failed to initialize can still
+      # connect afterward.
       #
       # @param _evaluation_context [::OpenFeature::SDK::EvaluationContext, nil]
       #
@@ -63,12 +64,12 @@ module LaunchDarkly
       def init(_evaluation_context = nil)
         wait_for_data_source_outcome if @wait_for_seconds.to_f <= 0
 
-        unless @client.initialized?
-          state = @client.data_source_status_provider.status.state
-          raise "the LaunchDarkly client was unable to initialize; the data source state is #{state}"
-        end
+        initialized = @client.initialized?
+        state = @client.data_source_status_provider.status.state
 
         start_emitting_events
+
+        raise "the LaunchDarkly client was unable to initialize; the data source state is #{state}" unless initialized
       end
 
       #
@@ -182,7 +183,7 @@ module LaunchDarkly
 
       #
       # Subscribe to the changes which are emitted as provider events. The OpenFeature SDK emits an event of its own
-      # for the outcome of initialization, so subscribing afterward avoids duplicating it.
+      # for the outcome of initialization, so subscribing once that outcome is known avoids duplicating it.
       #
       # @return [void]
       #
