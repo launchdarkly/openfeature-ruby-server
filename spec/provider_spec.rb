@@ -135,11 +135,15 @@ RSpec.describe LaunchDarkly::OpenFeature::Provider do
       .with(OpenFeature::SDK::ProviderEvent::PROVIDER_STALE, hash_including(:message))
   end
 
-  it "shutdown closes the client" do
-    allow(provider.client).to receive(:close)
+  it "shutdown unsubscribes the listeners and closes the client" do
+    status_provider = double(remove_listener: nil)
+    flag_tracker = double(remove_listener: nil)
+    allow(provider.client).to receive_messages(close: nil, data_source_status_provider: status_provider, flag_tracker: flag_tracker)
 
     provider.shutdown
 
+    expect(status_provider).to have_received(:remove_listener).with(instance_of(LaunchDarkly::OpenFeature::Impl::DataSourceStatusListener))
+    expect(flag_tracker).to have_received(:remove_listener).with(instance_of(LaunchDarkly::OpenFeature::Impl::FlagChangeListener))
     expect(provider.client).to have_received(:close)
   end
 

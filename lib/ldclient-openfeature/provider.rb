@@ -49,8 +49,11 @@ module LaunchDarkly
 
         @metadata = ::OpenFeature::SDK::Provider::ProviderMetadata.new(name: "launchdarkly-openfeature-server").freeze
 
-        @client.data_source_status_provider.add_listener(Impl::DataSourceStatusListener.new(self))
-        @client.flag_tracker.add_listener(Impl::FlagChangeListener.new(self))
+        @status_listener = Impl::DataSourceStatusListener.new(self)
+        @flag_change_listener = Impl::FlagChangeListener.new(self)
+
+        @client.data_source_status_provider.add_listener(@status_listener)
+        @client.flag_tracker.add_listener(@flag_change_listener)
       end
 
       #
@@ -116,6 +119,8 @@ module LaunchDarkly
       # @return [void]
       #
       def shutdown
+        @client.data_source_status_provider.remove_listener(@status_listener)
+        @client.flag_tracker.remove_listener(@flag_change_listener)
         @client.close
       end
 
