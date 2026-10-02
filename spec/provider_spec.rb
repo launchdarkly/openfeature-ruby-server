@@ -10,6 +10,10 @@ RSpec.describe LaunchDarkly::OpenFeature::Provider do
   let(:config) { LaunchDarkly::Config.new(data_source: td, send_events: false) }
   let(:provider) { described_class.new("example-key", config) }
 
+  def data_source_status(state, error = nil)
+    LaunchDarkly::Interfaces::DataSource::Status.new(state, Time.now, error)
+  end
+
   it "metadata is set correctly" do
     expect(provider.metadata.name).to eq("launchdarkly-openfeature-server")
   end
@@ -48,18 +52,98 @@ RSpec.describe LaunchDarkly::OpenFeature::Provider do
   end
 
   it "init raises when the client failed to initialize" do
-    status = LaunchDarkly::Interfaces::DataSource::Status.new(LaunchDarkly::Interfaces::DataSource::Status::OFF, Time.now, nil)
-    status_provider = double(status: status)
+    status_provider = double(status: data_source_status(LaunchDarkly::Interfaces::DataSource::Status::OFF))
     allow(provider.client).to receive_messages(initialized?: false, data_source_status_provider: status_provider)
 
     expect { provider.init(evaluation_context) }.to raise_error(/unable to initialize/)
   end
 
-  it "shutdown closes the client" do
-    allow(provider.client).to receive(:close)
+  it "init without a deadline waits for the data source to become valid" do
+    indefinite_provider = described_class.new("example-key", config, nil)
+
+    expect { indefinite_provider.init(evaluation_context) }.not_to raise_error
+    expect(indefinite_provider.client.initialized?).to be(true)
+  end
+
+  it "init without a deadline waits for a data source outcome which arrives later" do
+    indefinite_provider = described_class.new("example-key", config, nil)
+    listeners = []
+    status_provider = double(status: data_source_status(LaunchDarkly::Interfaces::DataSource::Status::INITIALIZING))
+    allow(status_provider).to receive(:add_listener) { |listener| listeners << listener }
+    allow(status_provider).to receive(:remove_listener)
+    allow(indefinite_provider.client).to receive_messages(initialized?: false, data_source_status_provider: status_provider)
+
+    reporter = Thread.new do
+      sleep(0.01) while listeners.empty?
+      listeners.each { |listener| listener.update(data_source_status(LaunchDarkly::Interfaces::DataSource::Status::OFF)) }
+    end
+
+    expect { indefinite_provider.init(evaluation_context) }.to raise_error(/unable to initialize/)
+
+    reporter.join
+  end
+
+  it "init with a wait time of zero does not wait" do
+    zero_wait_provider = described_class.new("example-key", config, 0)
+    status_provider = double(status: data_source_status(LaunchDarkly::Interfaces::DataSource::Status::INITIALIZING))
+    allow(status_provider).to receive(:add_listener)
+    allow(zero_wait_provider.client).to receive_messages(initialized?: false, data_source_status_provider: status_provider)
+
+    expect { zero_wait_provider.init(evaluation_context) }.to raise_error(/unable to initialize/)
+    expect(status_provider).not_to have_received(:add_listener)
+  end
+
+  it "init with a wait time does not wait again" do
+    wait_provider = described_class.new("example-key", config, 5)
+    status_provider = double(status: data_source_status(LaunchDarkly::Interfaces::DataSource::Status::INITIALIZING))
+    allow(status_provider).to receive(:add_listener)
+    allow(wait_provider.client).to receive_messages(initialized?: false, data_source_status_provider: status_provider)
+
+    expect { wait_provider.init(evaluation_context) }.to raise_error(/unable to initialize/)
+    expect(status_provider).not_to have_received(:add_listener)
+  end
+
+  it "a status change before initialization completes is not emitted" do
+    allow(provider).to receive(:emit_event)
+
+    provider.emit_status_event(OpenFeature::SDK::ProviderEvent::PROVIDER_READY)
+
+    expect(provider).not_to have_received(:emit_event)
+  end
+
+  it "a status change after initialization failed is emitted" do
+    status_provider = double(status: data_source_status(LaunchDarkly::Interfaces::DataSource::Status::OFF))
+    allow(provider.client).to receive_messages(initialized?: false, data_source_status_provider: status_provider)
+    expect { provider.init(evaluation_context) }.to raise_error(/unable to initialize/)
+    allow(provider).to receive(:emit_event)
+
+    provider.emit_status_event(OpenFeature::SDK::ProviderEvent::PROVIDER_READY)
+
+    expect(provider).to have_received(:emit_event).with(OpenFeature::SDK::ProviderEvent::PROVIDER_READY)
+  end
+
+  it "a status which does not change is not emitted" do
+    provider.init(evaluation_context)
+    allow(provider).to receive(:emit_event)
+
+    provider.emit_status_event(OpenFeature::SDK::ProviderEvent::PROVIDER_READY)
+    provider.emit_status_event(OpenFeature::SDK::ProviderEvent::PROVIDER_STALE, message: "interrupted")
+    provider.emit_status_event(OpenFeature::SDK::ProviderEvent::PROVIDER_STALE, message: "interrupted again")
+
+    expect(provider).to have_received(:emit_event).once
+    expect(provider).to have_received(:emit_event)
+      .with(OpenFeature::SDK::ProviderEvent::PROVIDER_STALE, hash_including(:message))
+  end
+
+  it "shutdown unsubscribes the listeners and closes the client" do
+    status_provider = double(remove_listener: nil)
+    flag_tracker = double(remove_listener: nil)
+    allow(provider.client).to receive_messages(close: nil, data_source_status_provider: status_provider, flag_tracker: flag_tracker)
 
     provider.shutdown
 
+    expect(status_provider).to have_received(:remove_listener).with(instance_of(LaunchDarkly::OpenFeature::Impl::DataSourceStatusListener))
+    expect(flag_tracker).to have_received(:remove_listener).with(instance_of(LaunchDarkly::OpenFeature::Impl::FlagChangeListener))
     expect(provider.client).to have_received(:close)
   end
 

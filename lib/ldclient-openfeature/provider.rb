@@ -33,34 +33,83 @@ module LaunchDarkly
       #
       # @param sdk_key [String]
       # @param config [LaunchDarkly::Config]
-      # @param wait_for_seconds [Float]
+      # @param wait_for_seconds [Float, nil] the number of seconds to wait for the client to become ready, or nil to
+      #   wait for it without a deadline
       #
       def initialize(sdk_key, config = LaunchDarkly::Config.default, wait_for_seconds = 5)
-        @client = LaunchDarkly::LDClient.new(sdk_key, config.with_wrapper_information(WRAPPER_NAME, VERSION), wait_for_seconds)
+        @client = LaunchDarkly::LDClient.new(sdk_key, config.with_wrapper_information(WRAPPER_NAME, VERSION), wait_for_seconds.nil? ? 0 : wait_for_seconds)
 
+        @wait_for_seconds = wait_for_seconds
+        @status_lock = Mutex.new
+        @status_event = nil
+        @initialization_complete = false
         @logger = config.logger
         @context_converter = Impl::EvaluationContextConverter.new(config.logger)
         @details_converter = Impl::ResolutionDetailsConverter.new
 
         @metadata = ::OpenFeature::SDK::Provider::ProviderMetadata.new(name: "launchdarkly-openfeature-server").freeze
 
-        @client.data_source_status_provider.add_listener(Impl::DataSourceStatusListener.new(self))
-        @client.flag_tracker.add_listener(Impl::FlagChangeListener.new(self))
+        @status_listener = Impl::DataSourceStatusListener.new(self)
+        @flag_change_listener = Impl::FlagChangeListener.new(self)
+
+        @client.data_source_status_provider.add_listener(@status_listener)
+        @client.flag_tracker.add_listener(@flag_change_listener)
       end
 
       #
-      # Called by the OpenFeature SDK when this provider is set. The LaunchDarkly client has already been given the
-      # opportunity to initialize, so this only reports whether that succeeded.
+      # Called by the OpenFeature SDK when this provider is set.
+      #
+      # A wait time has already been applied by the LaunchDarkly client constructor, so this reports whether that
+      # succeeded. A nil wait time asks for no deadline, so this waits for the data source to become valid or to fail
+      # permanently.
       #
       # @param _evaluation_context [::OpenFeature::SDK::EvaluationContext, nil]
       #
       # @return [void]
       #
       def init(_evaluation_context = nil)
-        return if @client.initialized?
+        wait_for_data_source_outcome if @wait_for_seconds.nil?
+
+        initialized = @client.initialized?
+
+        @status_lock.synchronize do
+          # The OpenFeature SDK emits its own event for the outcome of initialization, so the status is recorded
+          # here without emitting an event.
+          @status_event = if initialized
+                            ::OpenFeature::SDK::ProviderEvent::PROVIDER_READY
+                          else
+                            ::OpenFeature::SDK::ProviderEvent::PROVIDER_ERROR
+                          end
+          @initialization_complete = true
+        end
+
+        return if initialized
 
         state = @client.data_source_status_provider.status.state
         raise "the LaunchDarkly client was unable to initialize; the data source state is #{state}"
+      end
+
+      #
+      # Emit a provider event for a data source state change.
+      #
+      # A state which does not change the provider status is not emitted, and neither is the change which completes
+      # initialization, because the OpenFeature SDK emits its own event for that one. Changes after initialization has
+      # completed, including after it has failed, are emitted.
+      #
+      # @param event [String]
+      # @param details [Hash]
+      #
+      # @return [void]
+      #
+      def emit_status_event(event, **details)
+        @status_lock.synchronize do
+          return if event == @status_event
+
+          @status_event = event
+          return unless @initialization_complete
+        end
+
+        emit_event(event, **details)
       end
 
       #
@@ -70,6 +119,8 @@ module LaunchDarkly
       # @return [void]
       #
       def shutdown
+        @client.data_source_status_provider.remove_listener(@status_listener)
+        @client.flag_tracker.remove_listener(@flag_change_listener)
         @client.close
       end
 
@@ -168,6 +219,27 @@ module LaunchDarkly
         end
 
         @details_converter.to_resolution_details(evaluation_detail)
+      end
+
+      #
+      # Block until the data source reports an outcome for the client's first connection attempt.
+      #
+      # @return [void]
+      #
+      private def wait_for_data_source_outcome
+        outcome = Queue.new
+        listener = Impl::DataSourceOutcomeListener.new(outcome)
+        status_provider = @client.data_source_status_provider
+        status_provider.add_listener(listener)
+
+        begin
+          return if @client.initialized?
+          return if status_provider.status.state == ::LaunchDarkly::Interfaces::DataSource::Status::OFF
+
+          outcome.pop
+        ensure
+          status_provider.remove_listener(listener)
+        end
       end
 
       #
