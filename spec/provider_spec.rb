@@ -59,14 +59,22 @@ RSpec.describe LaunchDarkly::OpenFeature::Provider do
   end
 
   it "init without a deadline waits for the data source to become valid" do
-    indefinite_provider = described_class.new("example-key", config, nil)
+    indefinite_provider = described_class.new("example-key", config, described_class::WAIT_INDEFINITELY)
 
     expect { indefinite_provider.init(evaluation_context) }.not_to raise_error
     expect(indefinite_provider.client.initialized?).to be(true)
   end
 
+  it "an indefinite wait time does not make the client constructor wait" do
+    allow(LaunchDarkly::LDClient).to receive(:new).and_call_original
+
+    described_class.new("example-key", config, described_class::WAIT_INDEFINITELY)
+
+    expect(LaunchDarkly::LDClient).to have_received(:new).with("example-key", anything, 0)
+  end
+
   it "init without a deadline waits for a data source outcome which arrives later" do
-    indefinite_provider = described_class.new("example-key", config, nil)
+    indefinite_provider = described_class.new("example-key", config, described_class::WAIT_INDEFINITELY)
     listeners = []
     status_provider = double(status: data_source_status(LaunchDarkly::Interfaces::DataSource::Status::INITIALIZING))
     allow(status_provider).to receive(:add_listener) { |listener| listeners << listener }
