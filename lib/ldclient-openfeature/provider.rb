@@ -242,8 +242,9 @@ module LaunchDarkly
 
         begin
           return if @client.initialized?
-          return if status_provider.status.state == ::LaunchDarkly::Interfaces::DataSource::Status::OFF
 
+          # An outcome reached before the listener was added is not reported to it.
+          listener.update(status_provider.status)
           outcome.pop
         ensure
           status_provider.remove_listener(listener)

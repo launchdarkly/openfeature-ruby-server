@@ -91,6 +91,16 @@ RSpec.describe LaunchDarkly::OpenFeature::Provider do
     reporter.join
   end
 
+  it "init without a deadline does not wait for a data source which is already valid" do
+    indefinite_provider = described_class.new("example-key", config, described_class::WAIT_INDEFINITELY)
+    status_provider = double(status: data_source_status(LaunchDarkly::Interfaces::DataSource::Status::VALID))
+    allow(status_provider).to receive_messages(add_listener: nil, remove_listener: nil)
+    allow(indefinite_provider.client).to receive_messages(initialized?: false, data_source_status_provider: status_provider)
+
+    expect { Timeout.timeout(5) { indefinite_provider.init(evaluation_context) } }.to raise_error(/unable to initialize/)
+    expect(status_provider).to have_received(:remove_listener)
+  end
+
   it "init with a wait time of zero does not wait" do
     zero_wait_provider = described_class.new("example-key", config, 0)
     status_provider = double(status: data_source_status(LaunchDarkly::Interfaces::DataSource::Status::INITIALIZING))
