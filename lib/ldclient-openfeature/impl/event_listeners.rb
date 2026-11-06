@@ -25,14 +25,14 @@ module LaunchDarkly
         def update(status)
           case status.state
           when ::LaunchDarkly::Interfaces::DataSource::Status::VALID
-            @provider.emit_event(::OpenFeature::SDK::ProviderEvent::PROVIDER_READY)
+            @provider.emit_status_event(::OpenFeature::SDK::ProviderEvent::PROVIDER_READY)
           when ::LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED
-            @provider.emit_event(
+            @provider.emit_status_event(
               ::OpenFeature::SDK::ProviderEvent::PROVIDER_STALE,
               message: message(status, "the data source has been interrupted")
             )
           when ::LaunchDarkly::Interfaces::DataSource::Status::OFF
-            @provider.emit_event(
+            @provider.emit_status_event(
               ::OpenFeature::SDK::ProviderEvent::PROVIDER_ERROR,
               error_code: ::OpenFeature::SDK::Provider::ErrorCode::GENERAL,
               message: message(status, "the data source has been permanently shut down")
@@ -51,6 +51,31 @@ module LaunchDarkly
           return fallback if error.nil?
 
           "#{fallback}: #{error.kind} #{error.status_code} #{error.message}".strip
+        end
+      end
+
+      #
+      # Reports the first data source state which decides the outcome of the client's initial connection attempt.
+      #
+      class DataSourceOutcomeListener
+        #
+        # @param outcome [Queue]
+        #
+        def initialize(outcome)
+          @outcome = outcome
+        end
+
+        #
+        # @param status [LaunchDarkly::Interfaces::DataSource::Status]
+        #
+        # @return [void]
+        #
+        def update(status)
+          case status.state
+          when ::LaunchDarkly::Interfaces::DataSource::Status::VALID,
+            ::LaunchDarkly::Interfaces::DataSource::Status::OFF
+            @outcome.push(status.state)
+          end
         end
       end
 
