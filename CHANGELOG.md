@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.1](https://github.com/launchdarkly/openfeature-ruby-server/compare/0.3.0...0.3.1) (2026-10-29)
+
+
+### Bug Fixes
+
+* Allow openfeature-sdk 0.7 and 0.8 ([#38](https://github.com/launchdarkly/openfeature-ruby-server/issues/38)) ([4040bce](https://github.com/launchdarkly/openfeature-ruby-server/commit/4040bce73a10f49ec1c21f31987fd20d4299646a))
+* Require launchdarkly-server-sdk 8.19 so data source failures stay recoverable ([#42](https://github.com/launchdarkly/openfeature-ruby-server/issues/42)) ([53f8e8b](https://github.com/launchdarkly/openfeature-ruby-server/commit/53f8e8b66c977726b5e82ced53b4732300b7dd11))
+
 ## [0.3.0](https://github.com/launchdarkly/openfeature-ruby-server/compare/0.2.0...0.3.0) (2026-08-25)
 
 
