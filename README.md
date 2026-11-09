@@ -176,6 +176,7 @@ Evaluations include flag metadata for the LaunchDarkly specific parts of the eva
 |---------------------|---------|--------------------------------------------------------------------|
 | `variationIndex`    | integer | The index of the returned variation. Absent for default values.    |
 | `inExperiment`      | boolean | Present, and `true`, when the evaluation was part of an experiment. |
+| `overrideAffected`  | boolean | Present, and `true`, when a flag override affected the evaluation. Requires a LaunchDarkly Ruby SDK version with flag overrides. |
 | `ruleIndex`         | integer | The index of the rule that matched.                                |
 | `ruleId`            | string  | The identifier of the rule that matched.                           |
 | `prerequisiteKey`   | string  | The key of the prerequisite flag that failed.                       |
