@@ -63,6 +63,37 @@ RSpec.describe LaunchDarkly::OpenFeature::Impl::ResolutionDetailsConverter do
     expect(resolution_details.flag_metadata).not_to have_key('inExperiment')
   end
 
+  it "includes override affected in the flag metadata for override-affected evaluations" do
+    reason = LaunchDarkly::EvaluationReason::rule_match(2, 'the-rule-id', false).with_override_affected(true)
+    detail = LaunchDarkly::EvaluationDetail.new(true, 1, reason)
+    resolution_details = details_converter.to_resolution_details(detail)
+
+    expect(resolution_details.flag_metadata).to include('overrideAffected' => true)
+  end
+
+  it "omits override affected from the flag metadata for evaluations not affected by an override" do
+    reason = LaunchDarkly::EvaluationReason::rule_match(2, 'the-rule-id', false).with_override_affected(false)
+    detail = LaunchDarkly::EvaluationDetail.new(true, 1, reason)
+    resolution_details = details_converter.to_resolution_details(detail)
+
+    expect(resolution_details.flag_metadata).not_to have_key('overrideAffected')
+  end
+
+  it "omits override affected from the flag metadata when the reason does not mark it" do
+    detail = LaunchDarkly::EvaluationDetail.new(true, 1, LaunchDarkly::EvaluationReason::fallthrough(false))
+    resolution_details = details_converter.to_resolution_details(detail)
+
+    expect(resolution_details.flag_metadata).not_to have_key('overrideAffected')
+  end
+
+  it "includes override affected in the flag metadata for error evaluations affected by an override" do
+    reason = LaunchDarkly::EvaluationReason::error(LaunchDarkly::EvaluationReason::ERROR_FLAG_NOT_FOUND).with_override_affected(true)
+    detail = LaunchDarkly::EvaluationDetail.new(true, nil, reason)
+    resolution_details = details_converter.to_resolution_details(detail)
+
+    expect(resolution_details.flag_metadata).to eq({'overrideAffected' => true})
+  end
+
   it "includes the rule in the flag metadata for rule matches" do
     detail = LaunchDarkly::EvaluationDetail.new(true, 1, LaunchDarkly::EvaluationReason::rule_match(2, 'the-rule-id', false))
     resolution_details = details_converter.to_resolution_details(detail)

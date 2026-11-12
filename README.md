@@ -43,7 +43,7 @@ This matrix mirrors the [feature matrix of the OpenFeature SDK for Ruby](https:/
 | ✅      | Tracking                        | `track` sends a LaunchDarkly custom event for the evaluation context, with the tracking event value and remaining details attached.                                                                                       |
 | ✅      | Transaction Context Propagation | Provided by the OpenFeature SDK, which merges the transaction context into the evaluation context before the provider is called; no provider support is required.                                                         |
 | ✅      | Extending                       | This provider is itself an extension of the OpenFeature SDK. The underlying LaunchDarkly client is available through `provider.client` for functionality with no OpenFeature equivalent.                                  |
-| ✅      | Flag metadata                   | LaunchDarkly evaluation reason details are returned as OpenFeature flag metadata. See [Flag Metadata](#flag-metadata).                                                                                                    |
+| ✅      | Flag metadata                   | LaunchDarkly evaluation reason details, including `overrideAffected`, are returned as OpenFeature flag metadata. See [Flag Metadata](#flag-metadata).                                                                                 |
 
 <sub>Supported: ✅ | Partially supported: ⚠️ | Not supported: ❌</sub>
 
@@ -176,6 +176,7 @@ Evaluations include flag metadata for the LaunchDarkly specific parts of the eva
 |---------------------|---------|--------------------------------------------------------------------|
 | `variationIndex`    | integer | The index of the returned variation. Absent for default values.    |
 | `inExperiment`      | boolean | Present, and `true`, when the evaluation was part of an experiment. |
+| `overrideAffected`  | boolean | Present, and `true`, when a flag override affected the evaluation. |
 | `ruleIndex`         | integer | The index of the rule that matched.                                |
 | `ruleId`            | string  | The identifier of the rule that matched.                           |
 | `prerequisiteKey`   | string  | The key of the prerequisite flag that failed.                       |

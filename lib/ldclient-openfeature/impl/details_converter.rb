@@ -9,13 +9,14 @@ module LaunchDarkly
       class ResolutionDetailsConverter
         VARIATION_INDEX_KEY = 'variationIndex'
         IN_EXPERIMENT_KEY = 'inExperiment'
+        OVERRIDE_AFFECTED_KEY = 'overrideAffected'
         RULE_INDEX_KEY = 'ruleIndex'
         RULE_ID_KEY = 'ruleId'
         PREREQUISITE_KEY_KEY = 'prerequisiteKey'
         BIG_SEGMENTS_STATUS_KEY = 'bigSegmentsStatus'
 
-        private_constant :VARIATION_INDEX_KEY, :IN_EXPERIMENT_KEY, :RULE_INDEX_KEY, :RULE_ID_KEY,
-          :PREREQUISITE_KEY_KEY, :BIG_SEGMENTS_STATUS_KEY
+        private_constant :VARIATION_INDEX_KEY, :IN_EXPERIMENT_KEY, :OVERRIDE_AFFECTED_KEY, :RULE_INDEX_KEY,
+          :RULE_ID_KEY, :PREREQUISITE_KEY_KEY, :BIG_SEGMENTS_STATUS_KEY
 
         #
         # @param detail [LaunchDarkly::EvaluationDetail]
@@ -61,6 +62,7 @@ module LaunchDarkly
 
           metadata[VARIATION_INDEX_KEY] = variation_index unless variation_index.nil?
           metadata[IN_EXPERIMENT_KEY] = true if reason.in_experiment
+          metadata[OVERRIDE_AFFECTED_KEY] = true if reason.override_affected
           metadata[RULE_INDEX_KEY] = reason.rule_index unless reason.rule_index.nil?
           metadata[RULE_ID_KEY] = reason.rule_id unless reason.rule_id.nil?
           metadata[PREREQUISITE_KEY_KEY] = reason.prerequisite_key unless reason.prerequisite_key.nil?
