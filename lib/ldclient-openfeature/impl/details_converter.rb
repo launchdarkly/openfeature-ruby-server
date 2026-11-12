@@ -62,8 +62,7 @@ module LaunchDarkly
 
           metadata[VARIATION_INDEX_KEY] = variation_index unless variation_index.nil?
           metadata[IN_EXPERIMENT_KEY] = true if reason.in_experiment
-          # Only LaunchDarkly Ruby SDK versions with flag overrides define override_affected.
-          metadata[OVERRIDE_AFFECTED_KEY] = true if reason.respond_to?(:override_affected) && reason.override_affected
+          metadata[OVERRIDE_AFFECTED_KEY] = true if reason.override_affected
           metadata[RULE_INDEX_KEY] = reason.rule_index unless reason.rule_index.nil?
           metadata[RULE_ID_KEY] = reason.rule_id unless reason.rule_id.nil?
           metadata[PREREQUISITE_KEY_KEY] = reason.prerequisite_key unless reason.prerequisite_key.nil?
