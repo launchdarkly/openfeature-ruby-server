@@ -121,17 +121,12 @@ module LaunchDarkly
               @logger.error("The attribute 'anonymous' must be a boolean")
               next
             elsif k == 'privateAttributes' && v.is_a?(Array)
-              private_attributes = []
-              v.each do |private_attribute|
-                unless private_attribute.is_a?(String)
-                  @logger.error("'privateAttributes' must be an array of only string values")
-                  next
-                end
-
-                private_attributes << private_attribute
+              unless v.all?(String)
+                @logger.error("'privateAttributes' must be an array of only string values")
+                next
               end
 
-              context[:_meta] = { privateAttributes: private_attributes } unless private_attributes.empty?
+              context[:_meta] = { privateAttributes: v } unless v.empty?
             elsif k == 'privateAttributes'
               @logger.error("The attribute 'privateAttributes' must be an array")
             else

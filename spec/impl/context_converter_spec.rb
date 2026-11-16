@@ -141,6 +141,16 @@ RSpec.describe LaunchDarkly::OpenFeature::Impl::EvaluationContextConverter do
 
       expect(log_output.string).to include("'privateAttributes' must be an array of only string values")
     end
+
+    it "rejects the entire private attribute list when any entry is not a string" do
+      context = OpenFeature::SDK::EvaluationContext.new(key: "user-key", privateAttributes: ["email", true])
+
+      ld_context = context_converter.to_ld_context(context)
+
+      expect(ld_context.valid?).to be(true)
+      expect(ld_context.private_attributes).to be_empty
+      expect(log_output.string).to include("ERROR", "'privateAttributes' must be an array of only string values")
+    end
   end
 
   describe "multi kind context" do
