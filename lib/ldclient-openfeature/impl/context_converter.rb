@@ -153,10 +153,9 @@ module LaunchDarkly
           case value
           when NilClass, TrueClass, FalseClass, String, Integer, Float
             value
-          when Time
-            value.getutc.iso8601
-          when DateTime
-            value.to_time.getutc.iso8601
+          when Time, DateTime
+            utc_time = value.to_time.getutc
+            utc_time.iso8601(utc_time.nsec.zero? ? 0 : 9)
           when Date
             Time.utc(value.year, value.month, value.day).iso8601
           when Array

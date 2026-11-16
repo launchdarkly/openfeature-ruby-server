@@ -144,6 +144,16 @@ RSpec.describe LaunchDarkly::OpenFeature::Impl::EvaluationContextConverter do
       expect(values.last["nested"].first).to be_a(Time)
     end
 
+    it "preserves fractional seconds in instants used for targeting" do
+      time = Time.utc(2026, 11, 16, 0, 0, Rational(3, 2))
+      context = OpenFeature::SDK::EvaluationContext.new(key: "user-key", time: time, date_time: time.to_datetime)
+
+      ld_context = context_converter.to_ld_context(context)
+
+      expect(ld_context[:time]).to eq("2026-11-16T00:00:01.500000000Z")
+      expect(ld_context[:date_time]).to eq("2026-11-16T00:00:01.500000000Z")
+    end
+
     it "converts custom attribute values inside multi-contexts" do
       context = OpenFeature::SDK::EvaluationContext.new(
         kind: "multi", user: { key: "user-key", signed_up: Time.utc(2026, 11, 16) }, org: { key: "org-key" }
