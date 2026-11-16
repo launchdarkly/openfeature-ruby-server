@@ -114,6 +114,47 @@ RSpec.describe LaunchDarkly::OpenFeature::Impl::EvaluationContextConverter do
     end
   end
 
+  describe "attribute value conversion" do
+    it "converts instants to UTC without mutating frozen input values" do
+      time = Time.new(2026, 11, 16, 9, 30, 0, "+02:00").freeze
+      date_time = DateTime.new(2026, 11, 16, 9, 30, 0, "+02:00").freeze
+      values = { "time" => time, "date_time" => date_time, "date" => Date.new(2026, 11, 16) }.freeze
+      context = OpenFeature::SDK::EvaluationContext.new(key: "user-key", values: values)
+
+      ld_context = context_converter.to_ld_context(context)
+
+      expect(ld_context[:values]).to eq({
+        "time" => "2026-11-16T07:30:00Z",
+        "date_time" => "2026-11-16T07:30:00Z",
+        "date" => "2026-11-16T00:00:00Z",
+      })
+      expect(time.utc_offset).to eq(7200)
+      expect(values["time"]).to equal(time)
+    end
+
+    it "recursively converts list and structure values and replaces unsupported values with null" do
+      values = [nil, true, false, 42, 1.5, "text", { "nested" => [Time.utc(2026, 11, 16), Object.new] }].freeze
+      context = OpenFeature::SDK::EvaluationContext.new(key: "user-key", values: values, unsupported: Object.new)
+
+      ld_context = context_converter.to_ld_context(context)
+
+      expect(ld_context[:values]).to eq([nil, true, false, 42, 1.5, "text", { "nested" => ["2026-11-16T00:00:00Z", nil] }])
+      expect(ld_context[:unsupported]).to be_nil
+      expect(log_output.string).to include("ERROR", "cannot be converted; using null")
+      expect(values.last["nested"].first).to be_a(Time)
+    end
+
+    it "converts custom attribute values inside multi-contexts" do
+      context = OpenFeature::SDK::EvaluationContext.new(
+        kind: "multi", user: { key: "user-key", signed_up: Time.utc(2026, 11, 16) }, org: { key: "org-key" }
+      )
+
+      ld_context = context_converter.to_ld_context(context)
+
+      expect(ld_context.individual_context("user")[:signed_up]).to eq("2026-11-16T00:00:00Z")
+    end
+  end
+
   describe "private attribute handling" do
     it "private attributes are processed correctly" do
       attributes = {

@@ -2,6 +2,8 @@
 
 require 'ldclient-rb'
 require 'open_feature/sdk'
+require 'date'
+require 'time'
 
 module LaunchDarkly
   module OpenFeature
@@ -135,11 +137,36 @@ module LaunchDarkly
             elsif k == 'privateAttributes'
               @logger.error("The attribute 'privateAttributes' must be an array")
             else
-              context[k.to_sym] = v
+              context[k.to_sym] = convert_value(v)
             end
           end
 
           LaunchDarkly::LDContext.create(context)
+        end
+
+        #
+        # @param value [any]
+        #
+        # @return [any] a JSON-compatible LaunchDarkly context attribute value
+        #
+        private def convert_value(value)
+          case value
+          when NilClass, TrueClass, FalseClass, String, Integer, Float
+            value
+          when Time
+            value.getutc.iso8601
+          when DateTime
+            value.to_time.getutc.iso8601
+          when Date
+            Time.utc(value.year, value.month, value.day).iso8601
+          when Array
+            value.map { |item| convert_value(item) }
+          when Hash
+            value.transform_values { |item| convert_value(item) }
+          else
+            @logger.error("An evaluation context attribute of type #{value.class} cannot be converted; using null")
+            nil
+          end
         end
       end
     end
