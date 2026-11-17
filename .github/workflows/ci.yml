@@ -21,7 +21,7 @@ jobs:
           - jruby-10.0
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: ./.github/actions/ci
         with:
@@ -41,7 +41,7 @@ jobs:
         shell: powershell
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: ruby/setup-ruby@de492cf36cbab201753d720ce4f4e336cd688c94 # v1.336.0
         with:
