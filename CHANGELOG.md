@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/launchdarkly/openfeature-ruby-server/compare/0.3.1...0.4.0) (2026-11-17)
+
+
+### Features
+
+* add overrideAffected to flag metadata ([#45](https://github.com/launchdarkly/openfeature-ruby-server/issues/45)) ([8ae500c](https://github.com/launchdarkly/openfeature-ruby-server/commit/8ae500c2c11c46a8284368e19869679b91ec70ad))
+
 ## [0.3.1](https://github.com/launchdarkly/openfeature-ruby-server/compare/0.3.0...0.3.1) (2026-10-29)
 
 
