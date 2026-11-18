@@ -145,6 +145,32 @@ RSpec.describe LaunchDarkly::OpenFeature::Impl::EvaluationContextConverter do
 
   describe "multi kind context" do
     [true, false].each do |string_keys|
+      ["user", "multi", 42].each do |nested_kind|
+        it "ignores nested kind #{nested_kind.inspect} in #{string_keys ? 'string' : 'symbol'}-keyed attributes" do
+          attributes = { key: "org-key", kind: nested_kind, tier: "premium" }
+          attributes = attributes.transform_keys(&:to_s) if string_keys
+          context = OpenFeature::SDK::EvaluationContext.new(kind: "multi", org: attributes, user: { key: "user-key" })
+
+          ld_context = context_converter.to_ld_context(context)
+
+          expect(ld_context.valid?).to be(true)
+          expect(ld_context.multi_kind?).to be(true)
+          expect(ld_context.individual_context_count).to eq(2)
+
+          { "org" => "org-key", "user" => "user-key" }.each do |kind, key|
+            individual_context = ld_context.individual_context(kind)
+            expect(individual_context).not_to be_nil
+            expect(individual_context.kind).to eq(kind)
+            expect(individual_context.key).to eq(key)
+            expect(individual_context.get_custom_attribute_names).not_to include(:kind, "kind")
+          end
+
+          expect(ld_context.individual_context("org")[:tier]).to eq("premium")
+        end
+      end
+    end
+
+    [true, false].each do |string_keys|
       it "converts #{string_keys ? 'string' : 'symbol'}-keyed attributes without mutating them" do
         attributes = {
           key: "fallback",
