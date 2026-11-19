@@ -24,7 +24,7 @@ This provider is designed primarily for use in multi-user systems such as web se
 
 ## Supported Ruby versions
 
-This version of the LaunchDarkly provider works with Ruby 3.4 and above.
+While this version of the LaunchDarkly provider requires Ruby 3.4 or later, you should use the latest patched version of a supported Ruby release.
 
 ## Feature matrix
 
