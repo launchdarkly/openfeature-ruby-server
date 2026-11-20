@@ -83,10 +83,9 @@ module LaunchDarkly
               next
             end
 
-            key = attributes.fetch(:key, nil)
-            targeting_key = attributes.fetch(:targeting_key, nil)
-
-            next unless targeting_key.nil? || targeting_key.is_a?(String)
+            attributes = attributes.transform_keys(&:to_s)
+            key = attributes.fetch('key', nil)
+            targeting_key = attributes.fetch('targeting_key', nil)
 
             targeting_key = get_targeting_key(targeting_key, key)
             single_context = build_single_context(attributes, kind, targeting_key)
