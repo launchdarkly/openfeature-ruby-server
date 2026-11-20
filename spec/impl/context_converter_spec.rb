@@ -85,6 +85,7 @@ RSpec.describe LaunchDarkly::OpenFeature::Impl::EvaluationContextConverter do
       expect(ld_context.valid?).to be(true)
       expect(ld_context.key).to eq("org-key")
       expect(ld_context.kind).to eq("user")
+      expect(log_output.string).to include("ERROR", "'kind' was set to a non-string value; defaulting to user")
     end
   end
 

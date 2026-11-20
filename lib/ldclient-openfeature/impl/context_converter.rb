@@ -30,7 +30,7 @@ module LaunchDarkly
           return build_multi_context(context) if kind == "multi"
 
           unless kind.nil? || kind.is_a?(String)
-            @logger.warn("'kind' was set to a non-string value; defaulting to user")
+            @logger.error("'kind' was set to a non-string value; defaulting to user")
             kind = 'user'
           end
 
